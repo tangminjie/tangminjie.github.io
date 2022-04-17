@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://tangminjie.github.io</id>
-    <title>Gridea</title>
-    <updated>2022-04-17T13:20:10.018Z</updated>
+    <title>Tangminjie blog</title>
+    <updated>2022-04-17T13:20:36.680Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://tangminjie.github.io"/>
     <link rel="self" href="https://tangminjie.github.io/atom.xml"/>
-    <subtitle>温故而知新</subtitle>
     <logo>https://tangminjie.github.io/images/avatar.png</logo>
     <icon>https://tangminjie.github.io/favicon.ico</icon>
-    <rights>All rights reserved 2022, Gridea</rights>
+    <rights>All rights reserved 2022, Tangminjie blog</rights>
     <entry>
         <title type="html"><![CDATA[Hello Gridea]]></title>
         <id>https://tangminjie.github.io/post/hello-gridea/</id>
