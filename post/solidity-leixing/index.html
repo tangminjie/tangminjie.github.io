@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://tangminjie.github.io/favicon.ico?v=1650210678520">
+<link rel="shortcut icon" href="https://tangminjie.github.io/favicon.ico?v=1650215040849">
 <link rel="stylesheet" href="https://tangminjie.github.io/styles/main.css">
 
 
@@ -18,9 +18,10 @@
 
 
 
-    <meta name="description" content="2.类型
-
-" />
+    <meta name="description" content="Solidity 是一种静态类型语言，这意味着每个变量（状态变量和局部变量）都需要在编译时指定变量的类型。
+Solidity 提供了几种基本类型，并且基本类型可以用来组合出复杂类型。
+需要注意以下几点：
+1.“undefined”或“nul..." />
     <meta name="keywords" content="solidity" />
   </head>
   <body>
@@ -30,7 +31,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://tangminjie.github.io">
-        <img src="https://tangminjie.github.io/images/avatar.png?v=1650210678520" class="site-logo">
+        <img src="https://tangminjie.github.io/images/avatar.png?v=1650215040849" class="site-logo">
         <h1 class="site-title">Tangminjie blog</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -64,7 +65,7 @@
         
       
         
-          <a href="https://tangminjie.github.io/post/solidity" class="site-nav">
+          <a href="https://tangminjie.github.io/tags/solidity" class="site-nav">
             solidity
           </a>
         
@@ -102,8 +103,16 @@
             <div class="post-date">2022-04-17</div>
             
             <div class="post-content" v-pre>
-              <p>2.类型</p>
-<!-- more -->
+              <p>Solidity 是一种静态类型语言，这意味着每个变量（状态变量和局部变量）都需要在编译时指定变量的类型。<br>
+Solidity 提供了几种基本类型，并且基本类型可以用来组合出复杂类型。<br>
+需要注意以下几点：<br>
+1.“undefined”或“null”值的概念在Solidity中不存在。<br>
+2.变量声明后将有默认初始值，其初始值字节表示全部为零。<br>
+3.bool 类型的默认值是 false。<br>
+4.uint 或 int 类型的默认值是 0 。<br>
+5.静态大小的数组和 bytes1 到 bytes32 ，每个单独的元素将被初始化为与其类型相对应的默认值。<br>
+6.对于动态大小的数组 bytes 和 string 类型，其默认缺省值是一个空数组或空字符串。<br>
+7.对于 enum 类型, 默认值是第一个成员。</p>
 
             </div>
             

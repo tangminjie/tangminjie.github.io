@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://tangminjie.github.io</id>
     <title>Tangminjie blog</title>
-    <updated>2022-04-17T15:55:20.053Z</updated>
+    <updated>2022-04-17T17:04:06.318Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://tangminjie.github.io"/>
     <link rel="self" href="https://tangminjie.github.io/atom.xml"/>
@@ -15,10 +15,16 @@
         <link href="https://tangminjie.github.io/post/solidity-leixing/">
         </link>
         <updated>2022-04-17T15:49:30.000Z</updated>
-        <summary type="html"><![CDATA[<p>2.类型</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>2.类型</p>
-<!-- more -->
+        <content type="html"><![CDATA[<p>Solidity 是一种静态类型语言，这意味着每个变量（状态变量和局部变量）都需要在编译时指定变量的类型。<br>
+Solidity 提供了几种基本类型，并且基本类型可以用来组合出复杂类型。<br>
+需要注意以下几点：<br>
+1.“undefined”或“null”值的概念在Solidity中不存在。<br>
+2.变量声明后将有默认初始值，其初始值字节表示全部为零。<br>
+3.bool 类型的默认值是 false。<br>
+4.uint 或 int 类型的默认值是 0 。<br>
+5.静态大小的数组和 bytes1 到 bytes32 ，每个单独的元素将被初始化为与其类型相对应的默认值。<br>
+6.对于动态大小的数组 bytes 和 string 类型，其默认缺省值是一个空数组或空字符串。<br>
+7.对于 enum 类型, 默认值是第一个成员。</p>
 ]]></content>
     </entry>
     <entry>
@@ -27,10 +33,79 @@
         <link href="https://tangminjie.github.io/post/solidity/">
         </link>
         <updated>2022-03-17T15:02:21.000Z</updated>
-        <summary type="html"><![CDATA[<p>###前言：</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>###前言：</p>
-<!-- more -->
+        <content type="html"><![CDATA[<p><strong>前言</strong><br>
+solidity作为以太坊网络中的智能合约编程语言，这个篇章将以合约结构，类型，单位和全局变量，表达式和控制结构，以及合约demo来整理solidity相关的基础内容。</p>
+<p><strong>状态变量</strong><br>
+状态变量是永久地存储在合约存储中的。</p>
+<pre><code class="language-pragma">
+contract TinyStorage {
+    uint storedXlbData; // 状态变量
+    // ...
+}
+</code></pre>
+<p><strong>函数</strong><br>
+函数是代码的可执行单元。函数通常在合约内部定义，但也可以在合约外定义</p>
+<pre><code class="language-//">pragma solidity &gt;0.7.0 &lt;0.9.0;
+
+contract TinyAuction {
+    function Mybid() public payable { // 定义函数
+        // ...
+    }
+}
+// Helper function defined outside of a contract
+function helper(uint x) pure returns (uint) {
+    return x * 2;
+}
+</code></pre>
+<p><strong>函数修改器</strong><br>
+函数修改器modifier可以用来以声明的方式修改函数语义。</p>
+<pre><code class="language-pragma">
+contract MyPurchase {
+    address public seller;
+
+    modifier onlySeller() { // 修改器
+        require(
+            msg.sender == seller,
+            &quot;Only seller can call this.&quot;
+        );
+        _;
+    }
+
+    function abort() public onlySeller { // 修改器用法
+        // ...
+    }
+}
+</code></pre>
+<p><strong>事件 Event</strong><br>
+事件是能方便地调用以太坊虚拟机日志功能的接口。</p>
+<pre><code class="language-pragma">contract TinyAuction {
+    event HighestBidIncreased(address bidder, uint amount); // 事件
+
+    function bid() public payable {
+        // ...
+        emit HighestBidIncreased(msg.sender, msg.value); // 触发事件
+    }
+}
+</code></pre>
+<p><strong>结构体</strong><br>
+结构体是可以将几个变量分组的自定义类型。</p>
+<pre><code class="language-pragma">
+contract TinyBallot {
+    struct Voter { // 结构体
+        uint weight;
+        bool voted;
+        address delegate;
+        uint vote;
+    }
+}
+</code></pre>
+<p><strong>枚举类型</strong><br>
+枚举可用来创建由一定数量的“常量值”构成的自定义类型</p>
+<pre><code class="language-pragma">
+contract Upchain {
+    enum State { Created, Locked, InValid } // 枚举
+}
+</code></pre>
 ]]></content>
     </entry>
     <entry>

@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://tangminjie.github.io/favicon.ico?v=1650210678520">
+<link rel="shortcut icon" href="https://tangminjie.github.io/favicon.ico?v=1650215040849">
 <link rel="stylesheet" href="https://tangminjie.github.io/styles/main.css">
 
 
@@ -18,9 +18,12 @@
 
 
 
-    <meta name="description" content="###前言：
+    <meta name="description" content="前言
+solidity作为以太坊网络中的智能合约编程语言，这个篇章将以合约结构，类型，单位和全局变量，表达式和控制结构，以及合约demo来整理solidity相关的基础内容。
+状态变量
+状态变量是永久地存储在合约存储中的。
 
-" />
+contrac..." />
     <meta name="keywords" content="solidity" />
   </head>
   <body>
@@ -30,7 +33,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://tangminjie.github.io">
-        <img src="https://tangminjie.github.io/images/avatar.png?v=1650210678520" class="site-logo">
+        <img src="https://tangminjie.github.io/images/avatar.png?v=1650215040849" class="site-logo">
         <h1 class="site-title">Tangminjie blog</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -64,7 +67,7 @@
         
       
         
-          <a href="https://tangminjie.github.io/post/solidity" class="site-nav">
+          <a href="https://tangminjie.github.io/tags/solidity" class="site-nav">
             solidity
           </a>
         
@@ -102,8 +105,79 @@
             <div class="post-date">2022-03-17</div>
             
             <div class="post-content" v-pre>
-              <p>###前言：</p>
-<!-- more -->
+              <p><strong>前言</strong><br>
+solidity作为以太坊网络中的智能合约编程语言，这个篇章将以合约结构，类型，单位和全局变量，表达式和控制结构，以及合约demo来整理solidity相关的基础内容。</p>
+<p><strong>状态变量</strong><br>
+状态变量是永久地存储在合约存储中的。</p>
+<pre><code class="language-pragma">
+contract TinyStorage {
+    uint storedXlbData; // 状态变量
+    // ...
+}
+</code></pre>
+<p><strong>函数</strong><br>
+函数是代码的可执行单元。函数通常在合约内部定义，但也可以在合约外定义</p>
+<pre><code class="language-//">pragma solidity &gt;0.7.0 &lt;0.9.0;
+
+contract TinyAuction {
+    function Mybid() public payable { // 定义函数
+        // ...
+    }
+}
+// Helper function defined outside of a contract
+function helper(uint x) pure returns (uint) {
+    return x * 2;
+}
+</code></pre>
+<p><strong>函数修改器</strong><br>
+函数修改器modifier可以用来以声明的方式修改函数语义。</p>
+<pre><code class="language-pragma">
+contract MyPurchase {
+    address public seller;
+
+    modifier onlySeller() { // 修改器
+        require(
+            msg.sender == seller,
+            &quot;Only seller can call this.&quot;
+        );
+        _;
+    }
+
+    function abort() public onlySeller { // 修改器用法
+        // ...
+    }
+}
+</code></pre>
+<p><strong>事件 Event</strong><br>
+事件是能方便地调用以太坊虚拟机日志功能的接口。</p>
+<pre><code class="language-pragma">contract TinyAuction {
+    event HighestBidIncreased(address bidder, uint amount); // 事件
+
+    function bid() public payable {
+        // ...
+        emit HighestBidIncreased(msg.sender, msg.value); // 触发事件
+    }
+}
+</code></pre>
+<p><strong>结构体</strong><br>
+结构体是可以将几个变量分组的自定义类型。</p>
+<pre><code class="language-pragma">
+contract TinyBallot {
+    struct Voter { // 结构体
+        uint weight;
+        bool voted;
+        address delegate;
+        uint vote;
+    }
+}
+</code></pre>
+<p><strong>枚举类型</strong><br>
+枚举可用来创建由一定数量的“常量值”构成的自定义类型</p>
+<pre><code class="language-pragma">
+contract Upchain {
+    enum State { Created, Locked, InValid } // 枚举
+}
+</code></pre>
 
             </div>
             
