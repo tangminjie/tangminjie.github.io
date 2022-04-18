@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>合约 | Tangminjie Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://tangminjie.github.io/favicon.ico?v=1650297810288">
+<link rel="stylesheet" href="https://tangminjie.github.io/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="Solidity 合约类似于面向对象语言中的类。合约中有用于数据持久化的状态变量，和可以修改状态变量的函数。 调用另一个合约实例的函数时，会执行一个 EVM 函数调用，这个操作会切换执行时的上下文，这样，前一个合约的状态变量就不能访问了。
+..." />
+    <meta name="keywords" content="solidity" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://tangminjie.github.io">
+        <img src="https://tangminjie.github.io/images/avatar.png?v=1650297810288" class="site-logo">
+        <h1 class="site-title">Tangminjie Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/nEjwCuZ71/" class="site-nav">
+            solidity
+          </a>
+        
+      
+        
+          <a href="/post/TypeScript" class="site-nav">
+            TypeScript
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://tangminjie.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">合约</h2>
+            <div class="post-date">2022-04-18</div>
+            
+            <div class="post-content" v-pre>
+              <p>Solidity 合约类似于面向对象语言中的类。合约中有用于数据持久化的状态变量，和可以修改状态变量的函数。 调用另一个合约实例的函数时，会执行一个 EVM 函数调用，这个操作会切换执行时的上下文，这样，前一个合约的状态变量就不能访问了。</p>
+<h2 id="创建合约">创建合约</h2>
+<p>可以通过以太坊交易“从外部”或从 Solidity 合约内部创建合约。<br>
+一些集成开发环境，例如 Remix, 通过使用一些UI用户界面使创建合约的过程更加顺畅。 在以太坊上通过编程创建合约使用 JavaScript API web3.js。<br>
+创建合约时， 合约的 构造函数 (一个用关键字 constructor 声明的函数)会执行一次。 构造函数是可选的。只允许有一个构造函数，这意味着不支持重载。<br>
+如果一个合约想要创建另一个合约，那么创建者必须知晓被创建合约的源代码(和二进制代码)。 这意味着不可能循环创建依赖项。</p>
+<pre><code class="language-pragma">
+contract OwnedToken {
+    // TokenCreator 是如下定义的合约类型.
+    // 不创建新合约的话，也可以引用它。
+    TokenCreator creator;
+    address owner;
+    bytes32 name;
+
+    // 这是注册 creator 和设置名称的构造函数。
+    constructor(bytes32 _name) {
+        // 状态变量通过其名称访问，而不是通过例如 this.owner 的方式访问。
+        // 这也适用于函数，特别是在构造函数中，你只能像这样（“内部地”）调用它们，
+        // 因为合约本身还不存在。
+        owner = msg.sender;
+        // 从 `address` 到 `TokenCreator` ，是做显式的类型转换
+        // 并且假定调用合约的类型是 TokenCreator，没有真正的方法来检查这一点。
+        creator = TokenCreator(msg.sender);
+        name = _name;
+    }
+
+    function changeName(bytes32 newName) public {
+        // 只有 creator （即创建当前合约的合约）能够更改名称 —— 因为合约是隐式转换为地址的，
+        // 所以这里的比较是可行的。
+        if (msg.sender == address(creator))
+            name = newName;
+    }
+
+    function transfer(address newOwner) public {
+        // 只有当前所有者才能发送 token。
+        if (msg.sender != owner) return;
+        // 我们也想询问 creator 是否可以发送。
+        // 请注意，这里调用了一个下面定义的合约中的函数。
+        // 如果调用失败（比如，由于 gas 不足），会立即停止执行。
+        if (creator.isTokenTransferOK(owner, newOwner))
+            owner = newOwner;
+    }
+}
+
+contract TokenCreator {
+    function createToken(bytes32 name)
+       public
+       returns (OwnedToken tokenAddress)
+    {
+        // 创建一个新的 Token 合约并且返回它的地址。
+        // 从 JavaScript 方面来说，返回类型是简单的 `address` 类型，因为
+        // 这是在 ABI 中可用的最接近的类型。
+        return new OwnedToken(name);
+    }
+
+    function changeName(OwnedToken tokenAddress, bytes32 name)  public {
+        // 同样，`tokenAddress` 的外部类型也是 `address` 。
+        tokenAddress.changeName(name);
+    }
+
+    function isTokenTransferOK(address currentOwner, address newOwner)
+        public
+        view
+        returns (bool ok)
+    {
+        // 检查一些任意的情况。
+        address tokenAddress = msg.sender;
+        return (keccak256(newOwner) &amp; 0xff) == (bytes20(tokenAddress) &amp; 0xff);
+    }
+}
+</code></pre>
+<h2 id="可见性和getter函数">可见性和getter函数</h2>
+<p>函数和状态变量有四种可见性类型。 函数可以指定为 external ，public ，internal 或者 private。 对于状态变量，不能设置为 external ，默认是 internal 。<br>
+external<br>
+外部函数作为合约接口的一部分，意味着我们可以从其他合约和交易中调用。 一个外部函数 f 不能从内部调用（即 f 不起作用，但 this.f() 可以）。 当收到大量数据的时候，外部函数有时候会更有效率，因为数据不会从calldata复制到内存.<br>
+public<br>
+public 函数是合约接口的一部分，可以在内部或通过消息调用。对于 public 状态变量， 会自动生成一个 getter 函数（见下面）。<br>
+internal<br>
+这些函数和状态变量只能是内部访问（即从当前合约内部或从它派生的合约访问），不使用 this 调用。<br>
+private<br>
+private 函数和状态变量仅在当前定义它们的合约中使用，并且不能被派生合约使用。</p>
+<h2 id="getter函数">Getter函数</h2>
+<p>编译器自动为所有 public 状态变量创建 getter 函数。</p>
+<pre><code class="language-pragma">
+contract C {
+    uint public data = 42;
+}
+
+contract Caller {
+    C c = new C();
+    function f() public {
+        uint local = c.data();
+    }
+}
+</code></pre>
+<p>getter 函数具有外部（external）可见性。如果在内部访问 getter（即没有 this. ），它被认为一个状态变量。 如果使用外部访问（即用 this. ），它被认作为一个函数。</p>
+<pre><code class="language-pragma">
+contract C {
+    uint public data;
+    function x() public {
+        data = 3; // 内部访问
+        uint val = this.data(); // 外部访问
+    }
+}
+</code></pre>
+<p>如果你有一个数组类型的 public 状态变量，那么你只能通过生成的 getter 函数访问数组的单个元素。这个机制以避免返回整个数组时的高成本gas。 可以使用如 data(0) 用于指定参数要返回的单个元素。 如果要在一次调用中返回整个数组，则需要写一个函数，例如:</p>
+<pre><code class="language-pragma">
+contract arrayExample {
+  // public state variable
+  uint[] public myArray;
+
+  // 指定生成的Getter 函数
+  /*
+  function myArray(uint i) public view returns (uint) {
+      return myArray[i];
+  }
+  */
+
+  // 返回整个数组
+  function getArray() public view returns (uint[] memory) {
+      return myArray;
+  }
+}
+现在可以使用 getArray() 获得整个数组，而 myArray(i) 是返回单个元素。
+</code></pre>
+<h2 id="函数修改器">函数修改器</h2>
+<p>使用 修改器modifier 可以轻松改变函数的行为。 例如，它们可以在执行函数之前自动检查某个条件。 修改器modifier 是合约的可继承属性，并可能被派生合约覆盖 , 但前提是它们被标记为 virtual。</p>
+<pre><code class="language-//">pragma solidity &gt;0.7.0 &lt;0.9.0;
+
+contract owned {
+    constructor() { owner = payable(msg.sender); }
+
+    address owner;
+
+    // 这个合约只定义一个修改器，但并未使用： 它将会在派生合约中用到。
+    // 修改器所修饰的函数体会被插入到特殊符号 _; 的位置。
+    // 这意味着如果是 owner 调用这个函数，则函数会被执行，否则会抛出异常。
+    modifier onlyOwner {
+        require(
+            msg.sender == owner,
+            &quot;Only owner can call this function.&quot;
+        );
+        _;
+    }
+    contract Mutex {
+    bool locked;
+    modifier noReentrancy() {
+        require(
+            !locked,
+            &quot;Reentrant call.&quot;
+        );
+        locked = true;
+        _;
+        locked = false;
+    }
+
+    // 这个函数受互斥量保护，这意味着 `msg.sender.call` 中的重入调用不能再次调用  `f`。
+    // `return 7` 语句指定返回值为 7，但修改器中的语句 `locked = false` 仍会执行。
+    function f() public noReentrancy returns (uint) {
+        (bool success,) = msg.sender.call(&quot;&quot;);
+        require(success);
+        return 7;
+    }
+}
+</code></pre>
+<p>如果你想访问定义在合约 C 的 修改器modifier m ， 可以使用 C.m 去引用它，而不需要使用虚拟表查找。<br>
+只能使用在当前合约或在基类合约中定义的 修改器modifier , 修改器modifier 也可以定义在库里面，但是他们被限定在库函数使用。<br>
+如果同一个函数有多个 修改器modifier，它们之间以空格隔开，修改器modifier 会依次检查执行。</p>
+<h2 id="constant-和-immutable-状态变量">Constant 和 Immutable 状态变量</h2>
+<p>状态变量声明为 constant (常量)或者 immutable （不可变量），在这两种情况下，合约一旦部署之后，变量将不在修改。对于 constant 常量, 他的值在编译器确定，而对于 immutable, 它的值在部署时确定。<br>
+与常规状态变量相比，常量和不可变量的gas成本要低得多。 对于常量，赋值给它的表达式将复制到所有访问该常量的位置，并且每次都会对其进行重新求值。 这样可以进行本地优化。<br>
+不可变变量在构造时进行一次求值，并将其值复制到代码中访问它们的所有位置。 对于这些值，将保留32个字节，即使它们适合较少的字节也是如此。 因此，常量有时可能比不可变量更便宜。</p>
+<h4 id="constant">Constant</h4>
+<p>如果状态变量声明为 constant (常量)。在这种情况下，只能使用那些在编译时有确定值的表达式来给它们赋值。 任何通过访问 storage，区块链数据（例如 block.timestamp, address(this).balance 或者 block.number）或执行数据（ msg.value 或 gasleft() ） 或对外部合约的调用来给它们赋值都是不允许的。</p>
+<h4 id="immutable">Immutable</h4>
+<p>声明为不可变量(immutable)的变量的限制要比声明为常量(constant) 的变量的限制少：可以在合约的构造函数中或声明时为不可变的变量分配任意值。 不可变量在构造期间无法读取其值，并且只能赋值一次。</p>
+<h2 id="函数">函数</h2>
+<p>可以在合约内部和外部定义函数。<br>
+合约之外的函数（也称为“自由函数”）始终具有隐式的 internal 可见性。 它们的代码包含在所有调用它们合约中，类似于内部库函数。</p>
+<pre><code class="language-//">pragma solidity &gt;0.7.0 &lt;0.9.0;
+function sum(uint[] memory _arr) pure returns (uint s) {
+    for (uint i = 0; i &lt; _arr.length; i++)
+        s += _arr[i];
+}
+contract ArrayExample {
+    bool found;
+    function f(uint[] memory _arr) public {
+        // This calls the free function internally.
+        // The compiler will add its code to the contract.
+        uint s = sum(_arr);
+        require(s &gt;= 10);
+        found = true;
+    }
+}
+</code></pre>
+<h4 id="函数参数及返回值">函数参数及返回值</h4>
+<p>与 Javascript 一样，函数可能需要参数作为输入; 而与 Javascript 和 C 不同的是，它们可能返回任意数量的参数作为输出。</p>
+<h4 id="函数参数输入参数">函数参数（输入参数)</h4>
+<p>函数参数的声明方式与变量相同。不过未使用的参数可以省略参数名。</p>
+<pre><code class="language-pragma">
+contract Simple {
+    uint sum;
+    function taker(uint _a, uint _b) public {
+        sum = _a + _b;
+    }
+}
+</code></pre>
+<h2 id="返回变量">返回变量</h2>
+<p>函数返回变量的声明方式在关键词 returns 之后，与参数的声明方式相同。</p>
+<pre><code class="language-pragma">
+contract Simple {
+    function arithmetic(uint _a, uint _b)
+        public
+        pure
+        returns (uint o_sum, uint o_product)
+    {
+        o_sum = _a + _b;
+        o_product = _a * _b;
+    }
+}
+</code></pre>
+<h4 id="返回多个值">返回多个值</h4>
+<p>当函数需要使用多个值，可以用语句 return (v0, v1, ..., vn) 。 参数的数量需要和声明时候一致。</p>
+<h4 id="view-视图函数">View 视图函数</h4>
+<p>可以将函数声明为 view 类型，这种情况下要保证不修改状态。view常被用来作为只读函数，不消耗GAS。</p>
+<h4 id="pure-纯函数">Pure 纯函数</h4>
+<p>函数可以声明为 pure ，在这种情况下，承诺不读取也不修改状态。pure常被用来作为常数计算。不消耗GAS。</p>
+<h2 id="receive-接收以太函数">receive 接收以太函数</h2>
+<p>个合约最多有一个 receive 函数, 声明函数为： <code>receive() external payable { ... }</code><br>
+不需要 function 关键字，也没有参数和返回值并且必须是　external　可见性和　payable 修饰． 它可以是 virtual 的，可以被重载也可以有 修改器modifier 。在对合约没有任何附加数据调用（通常是对合约转账）是会执行 receive 函数．　例如　通过 .send() or .transfer() 如果 receive 函数不存在，　但是有payable　的 fallback 回退函数 那么在进行纯以太转账时，fallback 函数会调用．<br>
+如果两个函数都没有，这个合约就没法通过常规的转账交易接收以太（会抛出异常）．<br>
+更糟的是，receive 函数可能只有 2300 gas 可以使用（如，当使用 send 或 transfer 时）， 除了基础的日志输出之外，进行其他操作的余地很小。下面的操作消耗会操作 2300 gas :<br>
+1.写入存储<br>
+2.创建合约<br>
+3.调用消耗大量 gas 的外部函数<br>
+4.发送以太币</p>
+<h2 id="fallback">fallback</h2>
+<p>合约可以最多有一个回退函数。函数声明为： <code>fallback () external [payable]</code>没有function　关键字。　必须是　external　可见性，它可以是 virtual 的，可以被重载也可以有 修改器modifier 。<br>
+如果在一个对合约调用中，没有其他函数与给定的函数标识符匹配fallback会被调用． 或者在没有 receive 函数　时，而没有提供附加数据对合约调用，那么fallback 函数会被执行。<br>
+fallback　函数始终会接收数据，但为了同时接收以太时，必须标记为payable 。</p>
+<pre><code class="language-pragma">contract Test {
+    // 发送到这个合约的所有消息都会调用此函数（因为该合约没有其它函数）。
+    // 向这个合约发送以太币会导致异常，因为 fallback 函数没有 `payable` 修饰符
+    fallback() external { x = 1; }
+    uint x;
+}
+
+// 这个合约会保留所有发送给它的以太币，没有办法返还。
+contract TestPayable {
+    // 除了纯转账外，所有的调用都会调用这个函数．
+    // (因为除了 receive 函数外，没有其他的函数).
+    // 任何对合约非空calldata 调用会执行回退函数(即使是调用函数附加以太).
+    fallback() external payable { x = 1; y = msg.value; }
+
+    // 纯转账调用这个函数，例如对每个空empty calldata的调用
+    receive() external payable { x = 2; y = msg.value; }
+    uint x;
+    uint y;
+}
+
+contract Caller {
+    function callTest(Test test) public returns (bool) {
+        (bool success,) = address(test).call(abi.encodeWithSignature(&quot;nonExistingFunction()&quot;));
+        require(success);
+        //  test.x 结果变成 == 1。
+
+        // address(test) 不允许直接调用 ``send`` ,  因为 ``test`` 没有 payable 回退函数
+        //  转化为 ``address payable`` 类型 , 然后才可以调用 ``send``
+        address payable testPayable = payable(address(test));
+
+
+        // 以下将不会编译，但如果有人向该合约发送以太币，交易将失败并拒绝以太币。
+        // test.send(2 ether）;
+    }
+
+    function callTestPayable(TestPayable test) public returns (bool) {
+        (bool success,) = address(test).call(abi.encodeWithSignature(&quot;nonExistingFunction()&quot;));
+        require(success);
+        // 结果 test.x 为 1  test.y 为 0.
+        (success,) = address(test).call{value: 1}(abi.encodeWithSignature(&quot;nonExistingFunction()&quot;));
+        require(success);
+        // 结果test.x 为1 而 test.y 为 1.
+
+        // 发送以太币, TestPayable 的 receive　函数被调用．
+        require(payable(test).send(2 ether));
+        // 结果 test.x 为 2 而 test.y 为 2 ether.
+
+        return true;
+    }
+
+}
+</code></pre>
+<h2 id="函数重载">函数重载</h2>
+<p>合约可以具有多个不同参数的同名函数，称为“重载”（overloading），这也适用于继承函数。以下示例展示了合约 A 中的重载函数 f。</p>
+<pre><code class="language-pragma">
+contract A {
+    function f(uint _in) public pure returns (uint out) {
+        out = _in;
+    }
+
+    function f(uint _in, bool _really) public pure returns (uint out) {
+        if (_really)
+            out = _in;
+    }
+}
+</code></pre>
+<p>重载函数也存在于外部接口中。如果两个外部可见函数仅区别于 Solidity 内的类型而不是它们的外部类型则会导致错误。以下两个 f 函数重载都接受了 ABI 的地址类型，虽然它们在 Solidity 中被认为是不同的。</p>
+<pre><code class="language-//">pragma solidity &gt;=0.4.16 &lt;0.9.0;
+
+contract A {
+    function f(B _in) public pure returns (B out) {
+        out = _in;
+    }
+
+    function f(address _in) public pure returns (address out) {
+        out = _in;
+    }
+}
+
+contract B {
+}
+</code></pre>
+<h4 id="重载解析和参数匹配">重载解析和参数匹配</h4>
+<p>通过将当前范围内的函数声明与函数调用中提供的参数相匹配，可以选择重载函数。 如果所有参数都可以隐式地转换为预期类型，则选择函数作为重载候选项。如果一个候选都没有，解析失败。</p>
+<pre><code class="language-pragma">
+contract A {
+    function f(uint8 _in) public pure returns (uint8 out) {
+        out = _in;
+    }
+
+    function f(uint256 _in) public pure returns (uint256 out) {
+        out = _in;
+    }
+}
+</code></pre>
+<h2 id="事件-events">事件 Events</h2>
+<p>声明事件，再 emit 事件，类似与 nodejs，与 web3 交互类似与 websocket</p>
+<pre><code class="language-pragma">
+contract ClientReceipt {
+    event Deposit(
+        address indexed _from,
+        bytes32 indexed _id,
+        uint _value
+    );
+
+    function deposit(bytes32 _id) public payable {
+        // 事件使用 emit 触发事件。
+        // 我们可以过滤对 `Deposit` 的调用，从而用 Javascript API 来查明对这个函数的任何调用（甚至是深度嵌套调用）。
+        emit Deposit(msg.sender, _id, msg.value);
+    }
+}
+</code></pre>
+<p>使用 JavaScript API 调用事件的用法如下：</p>
+<pre><code class="language-var">var ClientReceipt = web3.eth.contract(abi);
+var clientReceipt = ClientReceipt.at(&quot;0x1234...xlb67&quot; /* 地址 */);
+
+var event = clientReceipt.Deposit();
+
+// 监听变化
+event.watch(function(error, result) {
+    // 结果包含 非索引参数 以及 主题 topic
+    if (!error)
+        console.log(result);
+});
+
+// 或者通过传入回调函数，立即开始听监
+var event = clientReceipt.Deposit(function(error, result) {
+    if (!error)
+        console.log(result);
+});
+</code></pre>
+<h2 id="继承">继承</h2>
+<p>Solidity 支持多重继承包括多态。<br>
+Solidity 的继承系统与Python的继承系统非常相似，特别是多重继承方面,另外一样可以使用super.f();来调用父类方法。<br>
+下面的例子进行了详细的说明。</p>
+<pre><code class="language-//">   pragma solidity &gt;=0.7.0 &lt;0.9.0;
+
+   contract Owned {
+       constructor() public { owner = payable(msg.sender); }
+       address payable owner;
+   }
+
+   // 使用 is 从另一个合约派生。派生合约可以访问所有非私有成员，包括内部（internal）函数和状态变量，
+   // 但无法通过 this 来外部访问。
+   contract Destructible is Owned {
+
+    // 关键字`virtual`表示该函数可以在派生类中“overriding”。
+
+       function destroy() virtual public {
+           if (msg.sender == owner) selfdestruct(owner);
+       }
+   }
+
+   // 这些抽象合约仅用于给编译器提供接口。
+   // 注意函数没有函数体。
+   // 如果一个合约没有实现所有函数，则只能用作接口。
+   abstract contract Config {
+       function lookup(uint id) public virtual returns (address adr);
+   }
+
+   abstract contract NameReg {
+       function register(bytes32 name) public virtual;
+       function unregister() public virtual;
+    }
+
+   // 可以多重继承。请注意，owned 也是 Destructible 的基类，
+   // 但只有一个 owned 实例（就像 C++ 中的虚拟继承）。
+   contract Named is Owned, Destructible {
+       constructor(bytes32 name) {
+           Config config = Config(0xD5f9D8D94886E70b06E474c3fB14Fd43E2f23970);
+           NameReg(config.lookup(1)).register(name);
+       }
+
+       // 函数可以被另一个具有相同名称和相同数量/类型输入的函数重载。
+       // 如果重载函数有不同类型的输出参数，会导致错误。
+       // 本地和基于消息的函数调用都会考虑这些重载。
+
+//如果要覆盖函数，则需要使用 `override` 关键字。 如果您想再次覆盖此函数，则需要再次指定`virtual`关键字。
+
+       function destroy() public virtual override {
+           if (msg.sender == owner) {
+               Config config = Config(0xD5f9D8D94886E70b06E474c3fB14Fd43E2f23970);
+               NameReg(config.lookup(1)).unregister();
+               // 仍然可以调用特定的重载函数。
+               Destructible.destroy();
+           }
+       }
+   }
+
+   // 如果构造函数接受参数，
+   // 则需要在声明（合约的构造函数）时提供，
+   // 或在派生合约的构造函数位置以修改器调用风格提供（见下文）。
+   contract PriceFeed is Owned, Destructible, Named(&quot;GoldFeed&quot;) {
+       function updateInfo(uint newInfo) public {
+           if (msg.sender == owner) info = newInfo;
+       }
+
+       // Here, we only specify `override` and not `virtual`.
+       // This means that contracts deriving from `PriceFeed`
+       // cannot change the behaviour of `destroy` anymore.
+       function destroy() public override(Destructible, Named) { Named.destroy(); }
+
+       function get() public view returns(uint r) { return info; }
+
+       uint info;
+   }
+</code></pre>
+<h2 id="函数重写overriding">函数重写(Overriding)</h2>
+<p>父合约标记为 virtual 函数可以在继承合约里重写(overridden)以更改他们的行为。重写的函数需要使用关键字 override 修饰。<br>
+重写函数只能将覆盖函数的可见性从 external 更改为 public 。<br>
+可变性可以按照以下顺序更改为更严格的一种： nonpayable 可以被 view 和 pure 覆盖。 view 可以被 pure 覆盖。 payable 是一个例外，不能更改为任何其他可变性。</p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://tangminjie.github.io/tag/nEjwCuZ71/" class="tag">
+                    solidity
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://tangminjie.github.io/post/biao-da-shi-he-kong-zhi-jie-gou/">
+                  <h3 class="post-title">
+                    表达式和控制结构
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
