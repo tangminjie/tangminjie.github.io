@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8" >
 
-<title>类型 | Tangminjie blog</title>
+<title>类型 | Tangminjie Blog</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://tangminjie.github.io/favicon.ico?v=1650215040849">
+<link rel="shortcut icon" href="https://tangminjie.github.io/favicon.ico?v=1650259975764">
 <link rel="stylesheet" href="https://tangminjie.github.io/styles/main.css">
 
 
@@ -20,7 +20,7 @@
 
     <meta name="description" content="Solidity 是一种静态类型语言，这意味着每个变量（状态变量和局部变量）都需要在编译时指定变量的类型。
 Solidity 提供了几种基本类型，并且基本类型可以用来组合出复杂类型。
-需要注意以下几点：
+需要注意以下几点:
 1.“undefined”或“nul..." />
     <meta name="keywords" content="solidity" />
   </head>
@@ -31,8 +31,8 @@ Solidity 提供了几种基本类型，并且基本类型可以用来组合出�
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://tangminjie.github.io">
-        <img src="https://tangminjie.github.io/images/avatar.png?v=1650215040849" class="site-logo">
-        <h1 class="site-title">Tangminjie blog</h1>
+        <img src="https://tangminjie.github.io/images/avatar.png?v=1650259975764" class="site-logo">
+        <h1 class="site-title">Tangminjie Blog</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
         <div class="line"></div>
@@ -65,7 +65,7 @@ Solidity 提供了几种基本类型，并且基本类型可以用来组合出�
         
       
         
-          <a href="https://tangminjie.github.io/tags/solidity" class="site-nav">
+          <a href="https://tangminjie.github.io/tag/nEjwCuZ71/" class="site-nav">
             solidity
           </a>
         
@@ -105,7 +105,7 @@ Solidity 提供了几种基本类型，并且基本类型可以用来组合出�
             <div class="post-content" v-pre>
               <p>Solidity 是一种静态类型语言，这意味着每个变量（状态变量和局部变量）都需要在编译时指定变量的类型。<br>
 Solidity 提供了几种基本类型，并且基本类型可以用来组合出复杂类型。<br>
-需要注意以下几点：<br>
+<strong>需要注意以下几点:</strong><br>
 1.“undefined”或“null”值的概念在Solidity中不存在。<br>
 2.变量声明后将有默认初始值，其初始值字节表示全部为零。<br>
 3.bool 类型的默认值是 false。<br>
@@ -113,6 +113,106 @@ Solidity 提供了几种基本类型，并且基本类型可以用来组合出�
 5.静态大小的数组和 bytes1 到 bytes32 ，每个单独的元素将被初始化为与其类型相对应的默认值。<br>
 6.对于动态大小的数组 bytes 和 string 类型，其默认缺省值是一个空数组或空字符串。<br>
 7.对于 enum 类型, 默认值是第一个成员。</p>
+<h2 id="值类型">值类型</h2>
+<h4 id="布尔类型">布尔类型</h4>
+<p>bool：可能的取值为字面常量值 true 和 false 。</p>
+<h4 id="整型">整型</h4>
+<p>int / uint ：分别表示有符号和无符号的不同位数的整型变量。 支持关键字 uint8 到 uint256 （无符号，从 8 位到 256 位）以及 int8 到 int256，以 8 位为步长递增。 uint 和 int 分别是 uint256 和 int256 的别名。<br>
+<strong>警告</strong><br>
+Solidity中的整数是有取值范围的。 例如 uint32 类型的取值范围是 0 到 2 ** 32-1 。 0.8.0 开始，算术运算有两个计算模式：一个是 “wrapping”（截断）模式或称 “unchecked”（不检查）模式，一个是”checked” （检查）模式。 默认情况下，算术运算在 “checked” 模式下，即都会进行溢出检查，如果结果落在取值范围之外，调用会通过 失败异常 回退。 你也可以通过 <code>unchecked { ... }</code> 切换到 “unchecked”模式，更多可参考 unchecked .</p>
+<h4 id="定长浮点型">定长浮点型</h4>
+<p><strong>警告</strong><br>
+Solidity 还没有完全支持定长浮点型。可以声明定长浮点型的变量，但不能给它们赋值或把它们赋值给其他变量。<br>
+fixed / ufixed：表示各种大小的有符号和无符号的定长浮点型。 在关键字 ufixedMxN 和 fixedMxN 中，M 表示该类型占用的位数，N 表示可用的小数位数。 M 必须能整除 8，即 8 到 256 位。 N 则可以是从 0 到 80 之间的任意数。 ufixed 和 fixed 分别是 ufixed128x19 和 fixed128x19 的别名。</p>
+<h4 id="地址类型-address">地址类型 Address</h4>
+<p>地址类型有两种形式，他们大致相同：<br>
+1.address：保存一个20字节的值（以太坊地址的大小）。<br>
+2.address payable ：可支付地址，与 address 相同，不过有成员函数 transfer 和 send 。<br>
+这种区别背后的思想是 address payable 可以接受以太币的地址，而一个普通的 address 则不能。<br>
+<strong>类型转换:</strong><br>
+允许从 address payable 到 address 的隐式转换，而从 address 到 address payable 必须显示的转换, 通过<code>payable(&lt;address&gt;)</code> 进行转换。<br>
+address 允许和 uint160、 整型字面常量、bytes20 及合约类型相互转换。<br>
+只能通过 payable(...) 表达式把 address 类型和合约类型转换为 address payable。 只有能接收以太币的合约类型，才能够进行此转换。例如合约要么有 receive 或可支付的fallback函数。 注意 payable(0) 是有效的，这是此规则的例外。<br>
+<strong>地址类型成员变量</strong><br>
+<strong>balance 和 transfer</strong><br>
+可以使用 balance 属性来查询一个地址的余额， 也可以使用 transfer 函数向一个可支付地址（payable address）发送 以太币Ether （以 wei 为单位）：</p>
+<pre><code class="language-address">address myAddress = this;
+if (x.balance &lt; 10 &amp;&amp; myAddress.balance &gt;= 10) x.transfer(10);
+</code></pre>
+<p>如果当前合约的余额不够多，则 transfer 函数会执行失败，或者如果以太转移被接收帐户拒绝， transfer 函数同样会失败而进行回退。<br>
+<strong>注意</strong><br>
+如果 x 是一个合约地址，它的代码（更具体来说是, 如果有receive函数, 执行 receive 接收以太函数, 或者存在fallback函数,执行 Fallback 回退函数 函数）会跟 transfer 函数调用一起执行（这是 EVM 的一个特性，无法阻止）。 如果在执行过程中用光了 gas 或者因为任何原因执行失败，以太币Ether 交易会被打回，当前的合约也会在终止的同时抛出异常。<br>
+当然因为这个特性的存在，我们在设计合约的时候需要考虑到可重入攻击（利用transfer执行之后回调用fallback进入递归反复转账）<br>
+<strong>send</strong><br>
+send 是 transfer 的低级版本。如果执行失败，当前的合约不会因为异常而终止，但 send 会返回 false。<br>
+<strong>注意</strong><br>
+send 是 transfer 的低级版本。如果执行失败，当前的合约不会因为异常而终止，但 send 会返回 false。在使用 send 的时候会有些风险：如果调用栈深度是 1024 会导致发送失败（这总是可以被调用者强制），如果接收者用光了 gas 也会导致发送失败。 所以为了保证 以太币Ether 发送的安全，一定要检查 send 的返回值，使用 transfer 或者更好的办法： 使用接收者自己取回资金的模式。<br>
+<strong>call， delegatecall 和 staticcall</strong><br>
+为了与不符合 应用二进制接口Application Binary Interface(ABI) 的合约交互，或者要更直接地控制编码，提供了函数 call，delegatecall 和 staticcall 。 它们都带有一个 bytes memory 参数和返回执行成功状态（bool）和数据（bytes memory）。<br>
+函数 abi.encode，abi.encodePacked，abi.encodeWithSelector 和 abi.encodeWithSignature 可用于编码结构化数据。</p>
+<pre><code class="language-bytes">(bool success, bytes memory returnData) = address(nameReg).call(payload);
+require(success);
+</code></pre>
+<p>此外，为了与不符合 应用二进制接口Application Binary Interface(ABI) 的合约交互，于是就有了可以接受任意类型任意数量参数的 call 函数。 这些参数会被打包到以 32 字节为单位的连续区域中存放。 其中一个例外是当第一个参数被编码成正好 4 个字节的情况。 在这种情况下，这个参数后边不会填充后续参数编码，以允许使用函数签名。</p>
+<pre><code class="language-address">nameReg.call(&quot;register&quot;, &quot;MyName&quot;);
+nameReg.call(bytes4(keccak256(&quot;fun(uint256)&quot;)), a);
+</code></pre>
+<p>可以使用gas修改器，调整提供的 gas 数量，也能控制提供的 以太币Ether 的值。 修改器modifier 可以联合使用。每个修改器出现的顺序不重要。</p>
+<pre><code class="language-address(nameReg).call{gas:"></code></pre>
+<p>以类似的方式，可以使用函数 delegatecall ：区别在于只调用给定地址的代码（函数），其他状态属性如（存储，余额 …）都来自当前合约。 delegatecall 的目的是使用另一个合约中的库代码。 用户必须确保两个合约中的存储结构都适合委托调用 （delegatecall）。</p>
+<h4 id="合约类型">合约类型</h4>
+<p>1.只有当合约具有 接收receive函数 或 payable 回退函数时，才能显式和 address payable 类型相互转换 转换仍然使用 address(x) 执行， 如果合约类型没有接收或payable 回退功能，则可以使用 payable(address(x)) 转换为 address payable 。<br>
+2,.您还可以实例化合约（即新创建一个合约对象）,使用new创建合约。<br>
+3.合约类型的成员是合约的外部函数及 public 的 状态变量。<br>
+4.对于合约 C 可以使用 type(C) 获取合约的类型信息，</p>
+<h4 id="定长字节数组">定长字节数组</h4>
+<p>关键字有：bytes1， bytes2， bytes3， …， bytes32。<br>
+成员变量：.length 表示这个字节数组的长度（只读）.<br>
+可以将 byte[] 当作字节数组使用，但这种方式非常浪费存储空间，准确来说，是在传入调用时，每个元素会浪费 31 字节。 更好地做法是使用 bytes。</p>
+<h4 id="边长字节数组">边长字节数组</h4>
+<h4 id="地址字面常量">地址字面常量</h4>
+<h4 id="有理数和整数字面常量">有理数和整数字面常量</h4>
+<h4 id="字符串字面常量及类型">字符串字面常量及类型</h4>
+<h4 id="unicode-字面常量">Unicode 字面常量</h4>
+<p>常规字符串文字只能包含ASCII，而Unicode文字（以关键字unicode为前缀）可以包含任何有效的UTF-8序列。 它们还支持与转义序列完全相同的字符作为常规字符串文字。</p>
+<pre><code class="language-string"></code></pre>
+<h4 id="十六进制字面常量">十六进制字面常量</h4>
+<h4 id="枚举类型">枚举类型</h4>
+<p>枚举是在Solidity中创建用户定义类型的一种方法。 它们是显示所有整型相互转换，但不允许隐式转换。 从整型显式转换枚举，会在运行时检查整数时候在枚举范围内，否则会导致异常（ Panic异常 ）。 枚举需要至少一个成员,默认值是第一个成员，枚举不能多于 256 个成员。<br>
+数据表示与C中的枚举相同：选项从“0”开始的无符号整数值表示。</p>
+<pre><code class="language-//">pragma solidity &gt;=0.4.16  &lt;0.9.0;
+
+contract test {
+    enum ActionChoices { GoLeft, GoRight, GoStraight, SitStill }
+    ActionChoices choice;
+    ActionChoices constant defaultChoice = ActionChoices.GoStraight;
+
+    function setGoStraight() public {
+        choice = ActionChoices.GoStraight;
+    }
+
+    // 由于枚举类型不属于 |ABI| 的一部分，因此对于所有来自 Solidity 外部的调用，
+    // &quot;getChoice&quot; 的签名会自动被改成 &quot;getChoice() returns (uint8)&quot;。
+
+    function getChoice() public view returns (ActionChoices) {
+        return choice;
+    }
+
+    function getDefaultChoice() public pure returns (uint) {
+        return uint(defaultChoice);
+    }
+}
+</code></pre>
+<h4 id="函数类型">函数类型</h4>
+<p>1.内部（internal） 函数类型，外部（external） 函数类型，公共函数（public），私有函数（private），函数类型默认是内部函数，因此不需要声明 internal 关键字<br>
+2.类型转换：<br>
+pure 函数可以转换为 view 和 non-payable 函数<br>
+view 函数可以转换为 non-payable 函数<br>
+payable 函数可以转换为 non-payable 函数，其他的转换则不可以。<br>
+3.public（或 external）函数都有下面的成员：<br>
+.address 返回函数的合约地址。<br>
+.selector 返回 ABI 函数选择器</p>
+<h2 id="引用类型">引用类型</h2>
 
             </div>
             
