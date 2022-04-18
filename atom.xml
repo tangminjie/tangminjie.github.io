@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://tangminjie.github.io</id>
     <title>Tangminjie Blog</title>
-    <updated>2022-04-18T05:33:39.920Z</updated>
+    <updated>2022-04-18T08:45:41.614Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://tangminjie.github.io"/>
     <link rel="self" href="https://tangminjie.github.io/atom.xml"/>
@@ -125,6 +125,132 @@ payable 函数可以转换为 non-payable 函数，其他的转换则不可以�
 .address 返回函数的合约地址。<br>
 .selector 返回 ABI 函数选择器</p>
 <h2 id="引用类型">引用类型</h2>
+<p>1.memory 内存即数据在内存中，因此数据仅在其生命周期内（函数调用期间）有效。不能用于外部调用。<br>
+2.存储 storage 状态变量保存的位置，只要合约存在就一直存储．<br>
+3.调用数据 calldata 用来保存函数参数的特殊数据位置，是一个只读位置。</p>
+<h4 id="数据位置">数据位置</h4>
+<h4 id="数据位置与赋值行为">数据位置与赋值行为</h4>
+<p>1.在存储storage和内存memory 之间两两赋值（或者从 调用数据calldata 赋值 ），都会创建一份独立的拷贝。<br>
+2.从内存memory到内存memory 的赋值只创建引用， 这意味着更改内存变量，其他引用相同数据的所有其他内存变量的值也会跟着改变。<br>
+3.从 存储storage 到本地存储变量的赋值也只分配一个引用。<br>
+4.其他的向 存储storage 的赋值，总是进行拷贝。 这种情况的示例如对状态变量或 存储storage 的结构体类型的局部变量成员的赋值，即使局部变量本身是一个引用，也会进行一份拷贝。</p>
+<h4 id="数组">数组</h4>
+<p>1.一个元素类型为 T，固定长度为 k 的数组可以声明为 T[k]，而动态数组声明为 T[]。<br>
+2.一个长度为 5，元素类型为 uint 的动态数组的数组（二维数组），应声明为 uint[][5]</p>
+<h4 id="创建内存数组">创建内存数组</h4>
+<p>1.不能 通过修改成员变量 .push 改变 内存 memory 数组的大小<br>
+2.定长的 内存memory 数组并不能赋值给变长的 内存memory 数组<br>
+3.</p>
+<pre><code class="language-pragma">
+contract TX {
+    function f(uint len) public pure {
+        uint[] memory a = new uint[](7);
+        bytes memory b = new bytes(len);
+
+        assert(a.length == 7);
+        assert(b.length == len);
+
+        a[6] = 8;
+    }
+}
+</code></pre>
+<h4 id="数组成员">数组成员</h4>
+<p>1.length<br>
+2.push() x.push().t = 2 或 x.push() = b<br>
+3.push(x) 固定 gas 费用<br>
+4.pop 根据现有的数组长度和移除的个数收取 gas 费用</p>
+<h4 id="数组切片">数组切片</h4>
+<p>1.数组切片是数组连续部分的视图，用法如：x[start:end] ， start 和 end 是 uint256 类型（或结果为 uint256 的表达式）。 x[start:end] 的第一个元素是 x[start] ， 最后一个元素是 x[end - 1] 。<br>
+2.目前数组切片，仅可使用于 calldata 数组.</p>
+<h4 id="结构体">结构体</h4>
+<p>1.和大多数编程语言一样，结构体类型可以作为元素用在映射和数组中，其自身也可以包含映射和数组作为成员变量。<br>
+2.在合约外部声明结构体可以使其被多个合约共享。</p>
+<h2 id="映射">映射</h2>
+<p>映射类型在声明时的形式为 mapping(_KeyType =&gt; _ValueType)。<br>
+使用：</p>
+<pre><code class="language-//">pragma solidity &gt;=0.4.0 &lt;0.9.0;
+
+contract MappingExample {
+    mapping(address =&gt; uint) public balances;
+
+    function update(uint newBalance) public {
+        balances[msg.sender] = newBalance;
+    }
+}
+
+contract MappingLBC {
+    function f() public returns (uint) {
+        MappingExample m = new MappingExample();
+        m.update(100);
+        return m.balances(this);
+    }
+}
+</code></pre>
+<h4 id="可迭代映射">可迭代映射</h4>
+<p>映射本身是无法遍历的，即无法枚举所有的键。不过，可以在它们之上实现一个数据结构来进行迭代。</p>
+<pre><code class="language-pragma">
+struct IndexValue { uint keyIndex; uint value; } //keyindex 表示key的索引
+struct KeyFlag { uint key; bool deleted; }  //key的实际值和删除状态
+
+struct itmap {
+    mapping(uint =&gt; IndexValue) data;
+    KeyFlag[] keys; //创建一个key的数组来储存KEY的状态
+    uint size;
+}
+</code></pre>
+<h4 id="涉及-lvalues-的运算符">涉及 LValues 的运算符</h4>
+<p>delete</p>
+<pre><code class="language-//">pragma solidity &gt;=0.4.0 &lt;0.9.0;
+
+contract DeleteLBC {
+    uint data;
+    uint[] dataArray;
+
+    function f() public {
+        uint x = data;
+        delete x; // 将 x 设为 0，并不影响数据
+        delete data; // 将 data 设为 0，并不影响 x，因为它仍然有个副本
+        uint[] storage y = dataArray;
+        delete dataArray;
+        // 将 dataArray.length 设为 0，但由于 uint[] 是一个复杂的对象，y 也将受到影响，
+        // 因为它是一个存储位置是 storage 的对象的别名。
+        // 另一方面：&quot;delete y&quot; 是非法的，引用了 storage 对象的局部变量只能由已有的 storage 对象赋值。
+        assert(y.length == 0);
+    }
+}
+</code></pre>
+<h4 id="基本类型之间的转换">基本类型之间的转换</h4>
+<p>隐式转换<br>
+uint8 可以转换成 uint16，int128 转换成 int256，但 int8 不能转换成 uint256<br>
+显式转换<br>
+如果某些情况下编译器不支持隐式转换，但是你很清楚你要做的结果，这种情况可以考虑显式转换。</p>
+<pre><code class="language-uint32">uint16 b = uint16(a); // 此时 b 的值是 0x5678
+</code></pre>
+<h2 id="字面常量与基本类型的转换">字面常量与基本类型的转换</h2>
+<h4 id="整型与字面常量转换">整型与字面常量转换</h4>
+<p>十进制和十六进制字面常量可以隐式转换为任何足以表示它而不会截断的整数类型</p>
+<pre><code class="language-uint8">uint32 b = 1234; // 可行
+uint16 c = 0x123456; // 失败, 会截断为 0x3456
+</code></pre>
+<h4 id="定长字节数组与字面常量转换">定长字节数组与字面常量转换</h4>
+<p>十进制字面常量不能隐式转换为定长字节数组。十六进制字面常量可以是，但仅当十六进制数字大小完全符合定长字节数组长度。 不过零值例外，零的十进制和十六进制字面常量都可以转换为任何定长字节数组类型:</p>
+<pre><code class="language-bytes2">bytes2 b = 0x12; // 不可行
+bytes2 c = 0x123; // 不可行
+bytes2 d = 0x1234; // 可行
+bytes2 e = 0x0012; // 可行
+bytes4 f = 0; // 可行
+bytes4 g = 0x0; // 可行
+</code></pre>
+<p>字符串字面常量和十六进制字符串字面常量可以隐式转换为定长字节数组，如果它们的字符数与字节类型的大小相匹配:</p>
+<pre><code class="language-bytes2">bytes2 b = &quot;xy&quot;; // 可行
+bytes2 c = hex&quot;12&quot;; // 不可行
+bytes2 d = hex&quot;123&quot;; // n不可行
+bytes2 e = &quot;x&quot;; // 不可行
+bytes2 f = &quot;xyz&quot;; // 不可行
+</code></pre>
+<h4 id="地址类型">地址类型</h4>
+<p>从 bytes20 或其他整型显示转换为 address 类型时，都会作为 address payable 类型。<br>
+一个地址 address a 可以通过payable(a)　转换为　 address payable 类型.</p>
 ]]></content>
     </entry>
     <entry>
