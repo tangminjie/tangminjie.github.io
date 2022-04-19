@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://tangminjie.github.io/favicon.ico?v=1650297810288">
+<link rel="shortcut icon" href="https://tangminjie.github.io/favicon.ico?v=1650351784149">
 <link rel="stylesheet" href="https://tangminjie.github.io/styles/main.css">
 
 
@@ -29,7 +29,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://tangminjie.github.io">
-        <img src="https://tangminjie.github.io/images/avatar.png?v=1650297810288" class="site-logo">
+        <img src="https://tangminjie.github.io/images/avatar.png?v=1650351784149" class="site-logo">
         <h1 class="site-title">Tangminjie Blog</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -554,10 +554,396 @@ Solidity 的继承系统与Python的继承系统非常相似，特别是多重�
        uint info;
    }
 </code></pre>
-<h2 id="函数重写overriding">函数重写(Overriding)</h2>
+<h3 id="函数重写overriding">函数重写(Overriding)</h3>
 <p>父合约标记为 virtual 函数可以在继承合约里重写(overridden)以更改他们的行为。重写的函数需要使用关键字 override 修饰。<br>
 重写函数只能将覆盖函数的可见性从 external 更改为 public 。<br>
 可变性可以按照以下顺序更改为更严格的一种： nonpayable 可以被 view 和 pure 覆盖。 view 可以被 pure 覆盖。 payable 是一个例外，不能更改为任何其他可变性。</p>
+<pre><code class="language-//">pragma solidity &gt;=0.7.0 &lt;0.9.0;
+
+contract Base
+{
+    function foo() virtual external view {}
+}
+
+contract Middle is Base {}
+
+contract Inherited is Middle
+{
+    function foo() override public pure {}
+}
+</code></pre>
+<p>对于多重继承，如果有多个父合约有相同定义的函数， override 关键字后必须指定所有父合约名。</p>
+<pre><code class="language-pragma">
+contract Base1
+{
+    function foo() virtual public {}
+}
+
+contract Base2
+{
+    function foo() virtual public {}
+}
+
+contract Inherited is Base1, Base2
+{
+    // 继承自两个基类合约定义的foo(), 必须显示的指定 override
+    function foo() public override(Base1, Base2) {}
+}
+</code></pre>
+<p>不过如果（重写的）函数继承自一个公共的父合约， override 是可以不用显示指定的。如果函数没有标记为 virtual ， 那么派生合约将不能更改函数的行为（即不能重写）。<br>
+注意：private 的函数是不可以标记为 virtual 的。除接口之外（因为接口会自动作为 virtual ），没有实现的函数必须标记为 virtual。</p>
+<p>如果getter 函数的参数和返回值都和外部函数一致时，外部（external）函数是可以被 public 的状态变量被重写的，例如：</p>
+<pre><code class="language-pragma">
+contract A
+{
+    function f() external view virtual returns(uint) { return 5; }
+}
+
+contract B is A
+{
+    uint public override f;
+}
+</code></pre>
+<p>注意：尽管public 的状态变量可以重写外部函数，但是public 的状态变量不能被重写。</p>
+<h3 id="修改器重写">修改器重写</h3>
+<p>修改器重写也可以被重写，工作方式和 :ref:<code>函数重写 &lt;function-overriding&gt;</code>_ 类似。 需要被重写的修改器也需要使用 virtual 修饰，override 则同样修饰重载，例如：</p>
+<pre><code class="language-pragma">
+contract Base
+{
+    modifier foo() virtual {_;}
+}
+
+contract Inherited is Base
+{
+    modifier foo() override {_;}
+}
+</code></pre>
+<p>如果是多重继承，所有直接父合约必须显示指定override， 例如：</p>
+<pre><code class="language-pragma">
+contract Base1
+{
+    modifier foo() virtual {_;}
+}
+
+contract Base2
+{
+    modifier foo() virtual {_;}
+}
+
+contract Inherited is Base1, Base2
+{
+    modifier foo() override(Base1, Base2) {_;}
+}
+</code></pre>
+<h3 id="构造函数">构造函数</h3>
+<p>构造函数是使用 constructor 关键字声明的一个可选函数, 它在创建合约时执行, 可以在其中运行合约初始化代码。<br>
+如果没有构造函数, 合约将假定采用默认构造函数, 它等效于 constructor() {}</p>
+<pre><code class="language-//">pragma solidity &gt;0.6.99 &lt;0.8.0;
+
+abstract contract A {
+    uint public a;
+
+    constructor(uint _a) {
+        a = _a;
+    }
+}
+
+contract B is A(1) {
+    constructor() {}
+}
+</code></pre>
+<h3 id="基类构造函数的参数">基类构造函数的参数</h3>
+<p>所有基类合约的构造函数将在下面解释的线性化规则被调用。如果基构造函数有参数, 派生合约需要指定所有参数。这可以通过两种方式来实现。<br>
+一种方法直接在继承列表中调用基类构造函数（is Base(7)）。 另一种方法是像 修改器modifier 使用方法一样， 作为派生合约构造函数定义头的一部分，（Base(_y * _y))。 如果构造函数参数是常量并且定义或描述了合约的行为，使用第一种方法比较方便。 如果基类构造函数的参数依赖于派生合约，那么必须使用第二种方法。</p>
+<pre><code class="language-//">pragma solidity &gt;0.6.99 &lt;0.8.0;
+
+contract Base {
+    uint x;
+    constructor(uint _x) { x = _x; }
+}
+
+// 直接在继承列表中指定参数
+contract Derived1 is Base(7) {
+    constructor() {}
+}
+
+// 或通过派生的构造函数中用 修饰符 &quot;modifier&quot;
+contract Derived2 is Base {
+    constructor(uint _y) Base(_y * _y) {}
+}
+</code></pre>
+<h3 id="多重继承与线性化">多重继承与线性化</h3>
+<p>简单来说继承层次结构中有多个构造函数时，继承线性化特别重要。 构造函数将始终以线性化顺序执行，无论在继承合约的构造函数中提供其参数的顺序如何。</p>
+<pre><code class="language-//">pragma solidity &gt;=0.4.0 &lt;0.8.0;
+
+contract X {}
+contract A is X {}
+// 编译出错
+contract C is A, X {}
+</code></pre>
+<pre><code class="language-//">pragma solidity &gt;0.6.99 &lt;0.8.0;
+
+contract Base1 {
+    constructor() {}
+}
+
+contract Base2 {
+    constructor() {}
+}
+
+//  构造函数以以下顺序执行:
+//  1 - Base1
+//  2 - Base2
+//  3 - Derived1
+contract Derived1 is Base1, Base2 {
+    constructor() Base1() Base2() {}
+}
+
+// 构造函数以以下顺序执行:
+//  1 - Base2
+//  2 - Base1
+//  3 - Derived2
+contract Derived2 is Base2, Base1 {
+    constructor() Base2() Base1() {}
+}
+
+// 构造函数仍然以以下顺序执行:
+//  1 - Base2
+//  2 - Base1
+//  3 - Derived3
+contract Derived3 is Base2, Base1 {
+    constructor() Base1() Base2() {}
+}
+</code></pre>
+<h3 id="继承有相同名字的不同类型成员">继承有相同名字的不同类型成员</h3>
+<p>当继承时合约出现了一下相同名字会被认为是一个错误：<br>
+1.函数和 修改器modifier 同名<br>
+2.函数和事件同名<br>
+3.事件和 修改器modifier 同名<br>
+有一种例外情况，状态变量的 getter 函数可以覆盖 external 函数。</p>
+<h2 id="抽象合约">抽象合约</h2>
+<p>如果未实现合约中的至少一个函数，则需要将合约标记为 abstract。 即使实现了所有功能，合同也可能被标记为abstract。这样的抽象合约不能直接实例化。 如果抽象合约本身确实都有实现所有定义的函数，也是正确的。 下例显示了抽象合约作为基类的用法:</p>
+<pre><code class="language-pragma">
+abstract contract Feline {
+  function utterance() public pure returns (bytes32);
+}
+
+contract Cat is Feline {
+  function utterance() public pure returns (bytes32) { return &quot;miaow&quot;; }
+}
+</code></pre>
+<p>如果合约继承自抽象合约，并且没有通过重写来实现所有未实现的函数， 它依然需要标记为抽象 abstract 合约。<br>
+注意：抽象合约不能用一个无实现的函数重写一个实现了的虚函数。</p>
+<h2 id="接口">接口</h2>
+<p>接口类似于抽象合约，但是它们不能实现任何函数。还有进一步的限制<br>
+1.法继承其他合约,不过可以继承其他接口。<br>
+2.所有的函数都需要是 external<br>
+3.无法定义构造函数。<br>
+4.无法定义状态变量。<br>
+接口基本上基本上仅限于合约 ABI 可以表示的内容，并且 ABI 和接口之间的转换应该不会丢失任何信息。</p>
+<pre><code class="language-pragma">
+interface Token {
+    enum TokenType { Fungible, NonFungible }
+    struct Coin { string obverse; string reverse; }
+    function transfer(address recipient, uint amount) external;
+}
+</code></pre>
+<p>接口可以继承其他的接口，遵循同样继承规则。</p>
+<pre><code class="language-pragma">
+interface ParentA {
+    function test() external returns (uint256);
+}
+
+interface ParentB {
+    function test() external returns (uint256);
+}
+
+interface SubInterface is ParentA, ParentB {
+    // 必须重新定义 test 函数，以表示兼容父合约含义
+    function test() external override(ParentA, ParentB) returns (uint256);
+}
+</code></pre>
+<h2 id="库">库</h2>
+<p>库与合约类似，它们只需要在特定的地址部署一次，并且它们的代码可以通过 EVM 的 DELEGATECALL (Homestead 之前使用 CALLCODE 关键字)特性进行重用。<br>
+下面的示例说明如何使用库：</p>
+<pre><code class="language-pragma">
+  // 我们定义了一个新的结构体数据类型，用于在调用合约中保存数据。
+  struct Data {
+    mapping(uint =&gt; bool) flags;
+  }
+
+library Set {
+
+  // 注意第一个参数是“storage reference”类型，因此在调用中参数传递的只是它的存储地址而不是内容。
+  // 这是库函数的一个特性。如果该函数可以被视为对象的方法，则习惯称第一个参数为 `self` 。
+  function insert(Data storage self, uint value)
+      public
+      returns (bool)
+  {
+      if (self.flags[value])
+          return false; // 已经存在
+      self.flags[value] = true;
+      return true;
+  }
+
+  function remove(Data storage self, uint value)
+      public
+      returns (bool)
+  {
+      if (!self.flags[value])
+          return false; // 不存在
+      self.flags[value] = false;
+      return true;
+  }
+
+  function contains(Data storage self, uint value)
+      public
+      view
+      returns (bool)
+  {
+      return self.flags[value];
+  }
+}
+
+contract C {
+    Data knownValues;
+
+    function register(uint value) public {
+        // 不需要库的特定实例就可以调用库函数，
+        // 因为当前合约就是“instance”。
+        require(Set.insert(knownValues, value));
+    }
+    // 如果我们愿意，我们也可以在这个合约中直接访问 knownValues.flags。
+}
+</code></pre>
+<p>以下示例展示了如何在库中使用内存类型和内部函数来实现自定义类型，而无需支付外部函数调用的开销：</p>
+<pre><code class="language-pragma">
+struct bigint {
+    uint[] limbs;
+}
+
+library BigInt {
+
+    function fromUint(uint x) internal pure returns (bigint r) {
+        r.limbs = new uint[](1);
+        r.limbs[0] = x;
+    }
+
+    function add(bigint _a, bigint _b) internal pure returns (bigint r) {
+        r.limbs = new uint[](max(_a.limbs.length, _b.limbs.length));
+        uint carry = 0;
+        for (uint i = 0; i &lt; r.limbs.length; ++i) {
+            uint a = limb(_a, i);
+            uint b = limb(_b, i);
+            r.limbs[i] = a + b + carry;
+            if (a + b &lt; a || (a + b == type(uint).max &amp;&amp; carry &gt; 0))
+                carry = 1;
+            else
+                carry = 0;
+        }
+        if (carry &gt; 0) {
+            // 太差了，我们需要增加一个 limb
+            uint[] memory newLimbs = new uint[](r.limbs.length + 1);
+            for (i = 0; i &lt; r.limbs.length; ++i)
+                newLimbs[i] = r.limbs[i];
+            newLimbs[i] = carry;
+            r.limbs = newLimbs;
+        }
+    }
+
+    function limb(bigint _a, uint _limb) internal pure returns (uint) {
+        return _limb &lt; _a.limbs.length ? _a.limbs[_limb] : 0;
+    }
+
+    function max(uint a, uint b) private pure returns (uint) {
+        return a &gt; b ? a : b;
+    }
+}
+
+contract C {
+    using BigInt for bigint;
+
+    function f() public pure {
+        bigint memory x = BigInt.fromUint(7);
+        bigint memory y = BigInt.fromUint(type(uint).max);
+        bigint memory z = x.add(y);
+        assert(z.limb(1) &gt; 0);
+    }
+}
+</code></pre>
+<p>与合约相比，库的限制：<br>
+1.没有状态变量<br>
+2.不能够继承或被继承<br>
+3.不能接收以太币<br>
+4.不可以被销毁</p>
+<h3 id="库的函数签名与选择器">库的函数签名与选择器</h3>
+<p>与合约 ABI 相似，选择器由签名的Keccak256哈希的前四个字节组成。可以使用 .selector 成员从Solidity中获取其值，如下所示：</p>
+<pre><code class="language-pragma">
+library L {
+    function f(uint256) external {}
+}
+
+contract C {
+    function g() public pure returns (bytes4) {
+        return L.f.selector;
+    }
+}
+</code></pre>
+<h3 id="库的调用保护">库的调用保护</h3>
+<p>如果库的代码是通过 CALL 来执行，而不是 DELEGATECALL 或者 CALLCODE 那么执行的结果会被回退， 除非是对 view 或者 pure 函数的调用。</p>
+<h2 id="using-for">Using For</h2>
+<p>在当前的合约上下里, 指令 using A for B; 可用于附加库函数（从库 A）到任何类型（B）。 这些函数将接收到调用它们的对象作为它们的第一个参数（像 Python 的 self 变量）。<br>
+using A for *; 的效果是，库 A 中的函数被附加在任意的类型上。</p>
+<pre><code class="language-pragma">
+// 这是和之前一样的代码，只是没有注释。
+struct Data { mapping(uint =&gt; bool) flags; }
+
+library Set {
+
+  function insert(Data storage self, uint value)
+      public
+      returns (bool)
+  {
+      if (self.flags[value])
+        return false; // 已经存在
+      self.flags[value] = true;
+      return true;
+  }
+
+  function remove(Data storage self, uint value)
+      public
+      returns (bool)
+  {
+      if (!self.flags[value])
+          return false; // 不存在
+      self.flags[value] = false;
+      return true;
+  }
+
+  function contains(Data storage self, uint value)
+      public
+      view
+      returns (bool)
+  {
+      return self.flags[value];
+  }
+}
+
+contract C {
+    using Set for Data; // 这里是关键的修改
+    Data knownValues;
+
+    function register(uint value) public {
+        // Here, all variables of type Data have
+        // corresponding member functions.
+        // The following function call is identical to
+        // `Set.insert(knownValues, value)`
+        // 这里， Data 类型的所有变量都有与之相对应的成员函数。
+        // 下面的函数调用和 `Set.insert(knownValues, value)` 的效果完全相同。
+        require(knownValues.insert(value));
+    }
+}
+</code></pre>
 
             </div>
             
