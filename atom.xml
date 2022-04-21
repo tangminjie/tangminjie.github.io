@@ -2,13 +2,188 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://tangminjie.github.io</id>
     <title>Tangminjie Blog</title>
-    <updated>2022-04-21T08:43:11.607Z</updated>
+    <updated>2022-04-21T10:45:09.434Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://tangminjie.github.io"/>
     <link rel="self" href="https://tangminjie.github.io/atom.xml"/>
     <logo>https://tangminjie.github.io/images/avatar.png</logo>
     <icon>https://tangminjie.github.io/favicon.ico</icon>
     <rights>All rights reserved 2022, Tangminjie Blog</rights>
+    <entry>
+        <title type="html"><![CDATA[ERC-721]]></title>
+        <id>https://tangminjie.github.io/post/erc-721/</id>
+        <link href="https://tangminjie.github.io/post/erc-721/">
+        </link>
+        <updated>2022-04-21T08:43:27.000Z</updated>
+        <content type="html"><![CDATA[<h1 id="介绍">介绍</h1>
+<p>什么是非同质化代币？<br>
+非同质化代币（NFT）用于以唯一的方式标识某人或者某物。 此类型的代币可以被完美地用于出售下列物品的平台：收藏品、密钥、彩票、音乐会座位编号、体育比赛等。 这种类型的代币有着惊人的潜力，因此它需要一个适当的标准。ERC-721 就是为解决这个问题而来！</p>
+<h1 id="erc-721-是什么">ERC-721 是什么?</h1>
+<p>和ERC20一样，ERC721同样是一个代币标准，ERC721官方简要解释是Non-Fungible Tokens，简写为NFTs。<br>
+那怎么理解非同质代币呢?ERC20代币是可置换的，且可细分为N份（1 = 10 * 0.1）, 而ERC721的Token最小的单位为1，无法再分割。所以每一个erc721的token都是独一无二的。</p>
+<h1 id="erc721标准">ERC721标准</h1>
+<p>ERC721作为一个合约标准，提供了在实现ERC721代币时必须要遵守的协议，要求每个ERC721标准合约需要实现ERC721及ERC165接口，接口定义如下：</p>
+<pre><code class="language-pragma">
+interface ERC721 /* is ERC165 */ {
+    
+    event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
+    event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
+    event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
+
+    //返回由_owner持有的NFTs的数量
+    function balanceOf(address _owner) external view returns (uint256);
+    //返回tokenid代币持有者的地址
+    function ownerOf(uint256 _tokenId) external view returns (address);
+
+    //转移NFT所有权，一次成功的转移操作必须发起 Transer 事件
+    function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes data) external payable;
+    function safeTransferFrom(address _from, address _to, uint256 _tokenId) external payable;
+    //transferFrom(): 用来转移NFTs, 方法成功后需触发Transfer事件。
+    function transferFrom(address _from, address _to, uint256 _tokenId) external payable;
+
+    //授予地址_approved具有_tokenId的控制权，方法成功后需触发Approval 事件
+    function approve(address _approved, uint256 _tokenId) external payable;
+    //授予地址_operator具有所有NFTs的控制权，成功后需触发ApprovalForAll事件。
+    function setApprovalForAll(address _operator, bool _approved) external;
+    //用来查询某个tokenid的授权。
+    function getApproved(uint256 _tokenId) external view returns (address);
+    //查询_owner 对 _operator是否所有授权
+    function isApprovedForAll(address _owner, address _operator) external view returns (bool);
+}
+</code></pre>
+<p>其中我们需要特别注意 safeTransferFrom(): 的用法：<br>
+safeTransferFrom(): 转移NFT所有权，一次成功的转移操作必须发起 Transer 事件。函数的实现需要做一下几种检查：<br>
+1.调用者msg.sender应该是当前tokenId的所有者或被授权的地址<br>
+2._from 必须是 _tokenId的所有者<br>
+3._tokenId 应该是当前合约正在监测的NFTs 中的任何一个<br>
+4._to 地址不应该为 0<br>
+5.如果_to 是一个合约应该调用其onERC721Received方法, 并且检查其返回值，如果返回值不为<code>bytes4(keccak256(&quot;onERC721Received(address,uint256,bytes)&quot;))抛出异常。</code><br>
+一个可接收NFT的合约必须实现ERC721TokenReceiver接口：</p>
+<pre><code class="language-interface">        /// @return `bytes4(keccak256(&quot;onERC721Received(address,uint256,bytes)&quot;))`
+        function onERC721Received(address _from, uint256 _tokenId, bytes data) external returns(bytes4);
+    }
+</code></pre>
+<p>transferFrom(): 用来转移NFTs, 方法成功后需触发Transfer事件。调用者自己确认_to地址能正常接收NFT，否则将丢失此NFT。此函数实现时需要检查上面条件的前4条。</p>
+<h1 id="erc165-标准">ERC165 标准</h1>
+<p>ERC721标准同时要求必须符合ERC165标准 ，其接口如下：</p>
+<pre><code class="language-interface">    function supportsInterface(bytes4 interfaceID) external view returns (bool);
+}
+</code></pre>
+<p>ERC165同样是一个合约标准，这个标准要求合约提供其实现了哪些接口，这样再与合约进行交互的时候可以先调用此接口进行查询。<br>
+interfaceID为函数选择器，计算方式有两种，如：bytes4(keccak256('supportsInterface(bytes4)'));或ERC165.supportsInterface.selector，多个函数的接口ID为函数选择器的异或值。</p>
+<h1 id="可选实现接口erc721metadata">可选实现接口：ERC721Metadata</h1>
+<p>ERC721Metadata 接口用于提供合约的元数据：name , symbol 及 URI（NFT所对应的资源）。<br>
+其接口定义如下：</p>
+<pre><code class="language-interface">    function name() external pure returns (string _name);
+    function symbol() external pure returns (string _symbol);
+    function tokenURI(uint256 _tokenId) external view returns (string);
+}
+</code></pre>
+<p>接口说明：<br>
+1.name(): 返回合约名字，尽管是可选，但强烈建议实现，即便是返回空字符串。<br>
+2.symbol(): 返回合约代币符号，尽管是可选，但强烈建议实现，即便是返回空字符串。<br>
+3.tokenURI(): 返回_tokenId所对应的外部资源文件的URI（通常是IPFS或HTTP(S)路径）。外部资源文件需要包含名字、描述、图片，其格式的要求如下：</p>
+<pre><code class="language-{">    &quot;title&quot;: &quot;Asset Metadata&quot;,
+permalink: token-erc721
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+        &quot;name&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;description&quot;: &quot;Identifies the asset to which this NFT represents&quot;,
+        },
+        &quot;description&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;description&quot;: &quot;Describes the asset to which this NFT represents&quot;,
+        },
+        &quot;image&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;description&quot;: &quot;A URI pointing to a resource with mime type image/* representing the asset to which this NFT represents. Consider making any images at a width between 320 and 1080 pixels and aspect ratio between 1.91:1 and 4:5 inclusive.&quot;,
+        }
+    }
+}
+</code></pre>
+<p>tokenURI通常是被web3调用，以便在应用层做相应的查询和展示。</p>
+<h1 id="可选实现接口erc721enumerable">可选实现接口：ERC721Enumerable</h1>
+<p>ERC721Enumerable的主要目的是提高合约中NTF的可访问性，其接口定义如下：</p>
+<pre><code class="language-interface">    function totalSupply() external view returns (uint256);
+    function tokenByIndex(uint256 _index) external view returns (uint256);
+    function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256);
+}
+</code></pre>
+<p>接口说明：<br>
+1.totalSupply(): 返回NFT总量<br>
+2.tokenByIndex(): 通过索引返回对应的tokenId。<br>
+3.tokenOfOwnerByIndex(): 所有者可以一次拥有多个的NFT, 此函数返回_owner拥有的NFT列表中对应索引的tokenId。</p>
+<h1 id="补充说明">补充说明</h1>
+<h2 id="ntf-ids">NTF IDs</h2>
+<p>NTF ID，即tokenId，在合约中用唯一的uint265进行标识，每个NFT的ID在智能合约的生命周期内不允许改变。推荐的实现方式有：<br>
+1.从0开始，每新加一个NFT，NTF ID加1<br>
+2.使用sha3后uuid 转换为 NTF ID</p>
+<h2 id="与erc-20的兼容性">与ERC-20的兼容性</h2>
+<p>ERC721标准尽可能遵循 ERC-20 的语义，但由于同质代币与非同质代币之间的根本差异，并不能完全兼容ERC-20。</p>
+<h2 id="交易-挖矿-销毁">交易、挖矿、销毁</h2>
+<p>在实现transter相关接口时除了满足上面的的条件外，我们可以根据需要添加自己的逻辑，如加入黑名单等。同时挖矿、销毁尽管不是标准的一部分，我们可以根据需要实现。</p>
+<h1 id="openzeppelin-中-erc-721的实现">openzeppelin 中 ERC-721的实现</h1>
+<p>在@openzeppelin/constracts/erc721.sol中实现了erc721的标准。<br>
+ERC721合约继承了 Context, 抽象合约，ERC165, IERC721, IERC721Metadata接口合约。<br>
+<code>contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {</code><br>
+1.Context 抽象合约提供了有关当前执行上下文的信息，包括事务的发送者及其数据。可以调用获得msg.sender 地址。<br>
+2.ERC165 提供了supportsInterface 接口。可以通过type(IERC721).interfaceId来查询合约实现了哪些接口。<br>
+3.IERC721，erc721的标准接口。<br>
+4.IERC721Metadata提供了合约的元数据接口，包括nfttoken的name，symbol，tokenUrl。<br>
+并且相对于ERC20 _mint接口需要提供 tokenid 并且增加了_setTokenURI接口将tokenID和tokenUrl绑定。tokenUrl通常为IPFS地址或者HTTPS地址。</p>
+<h2 id="构建-erc721-代币合约">构建 ERC721 代币合约</h2>
+<pre><code class="language-//">// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.0;
+
+import &quot;@openzeppelin/contracts/token/ERC721/ERC721.sol&quot;;
+import &quot;@openzeppelin/contracts/utils/Counters.sol&quot;;
+
+contract GameItem is ERC721 {
+    using Counters for Counters.Counter;
+    Counters.Counter private _tokenIds;
+
+    constructor() public ERC721(&quot;GameItem&quot;, &quot;ITM&quot;) {}
+
+    function awardItem(address player, string memory tokenURI)
+        public
+        returns (uint256)
+    {
+        _tokenIds.increment();
+
+        uint256 newItemId = _tokenIds.current();
+        _mint(player, newItemId);
+        _setTokenURI(newItemId, tokenURI);
+
+        return newItemId;
+    }
+}
+</code></pre>
+<p>ERC721合同包括所有标准扩展（和IERC721Metadata）IERC721Enumerable。这就是该_setTokenURI方法的来源：我们使用它来存储项目的元数据。<br>
+另请注意，与 ERC20 不同，ERC721 缺少decimals字段，因为每个令牌都是不同的并且不能被分区。</p>
+<pre><code class="language-可以创建新项目：">
+&gt; gameItem.awardItem(playerAddress, &quot;https://game.example/item-id-8u5h2m.json&quot;)
+Transaction successful. Transaction hash: 0x...
+Events emitted:
+ - Transfer(0x0000000000000000000000000000000000000000, playerAddress, 7)
+以及查询到的每个项目的所有者和元数据：
+
+&gt; gameItem.ownerOf(7)
+playerAddress
+&gt; gameItem.tokenURI(7)
+&quot;https://game.example/item-id-8u5h2m.json&quot;
+这tokenURI应该解析为可能类似于以下内容的 JSON 文档：
+
+{
+    &quot;name&quot;: &quot;Thor's hammer&quot;,
+    &quot;description&quot;: &quot;Mjölnir, the legendary hammer of the Norse god of thunder.&quot;,
+    &quot;image&quot;: &quot;https://game.example/item-id-8u5h2m.png&quot;,
+    &quot;strength&quot;: 20
+}
+</code></pre>
+<p>您会注意到该项目的信息包含在元数据中，但该信息不在链上！所以游戏开发者可以改变底层元数据，改变游戏规则！如果你想把所有的物品信息放在链上，你可以扩展 ERC721 来这样做（虽然它会相当昂贵）。您还可以利用 IPFS 来存储 tokenURI 信息。</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[ERC-20]]></title>
         <id>https://tangminjie.github.io/post/erc-20/</id>
