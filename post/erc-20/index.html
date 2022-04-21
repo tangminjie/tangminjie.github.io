@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://tangminjie.github.io/favicon.ico?v=1650521980653">
+<link rel="shortcut icon" href="https://tangminjie.github.io/favicon.ico?v=1650530327812">
 <link rel="stylesheet" href="https://tangminjie.github.io/styles/main.css">
 
 
@@ -30,7 +30,7 @@ ERC20简单理解成以太坊上的一个代币协..." />
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://tangminjie.github.io">
-        <img src="https://tangminjie.github.io/images/avatar.png?v=1650521980653" class="site-logo">
+        <img src="https://tangminjie.github.io/images/avatar.png?v=1650530327812" class="site-logo">
         <h1 class="site-title">Tangminjie Blog</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -290,6 +290,36 @@ msg.value表示随消息发送的wei的数量，payable修饰函数表示允许�
     }
 </code></pre>
 <p>当然在实际应用中的价格由dex或者uniswap等去中心化交易所，通过AMM协议的交易对计算得出。</p>
+<h1 id="openzeppelin-erc-20实现">openzeppelin ERC-20实现</h1>
+<p>我们在写合约业务的时候可以选择自己实现ERC20的协议，当然也可以使用openzeppelin的第三方库。openzeppelin中有完善的ERC20实现。<br>
+首先我们来看下一下openzeppelin官方文档中对于ERC20的描述：<br>
+ERC20 代币合约跟踪可替代代币：任何一种代币都完全等同于任何其他代币；没有任何代币具有与之相关的特殊权利或行为。这使得 ERC20 代币可用于交换货币、投票权、质押等媒介。<br>
+使用openzeppelin来构建erc20-token也十分的方便：<br>
+我们在hardhat工程中通过 npm install @openzeppelin/contracts 来安装openzeppelin的支持，就可以import进来使用：<br>
+我们的合约经常通过继承使用，在这里我们将重用ERC20基本标准实现以及name,symbol和decimals可选扩展。此外，我们正在创建一个initialSupply令牌，它将分配给部署合约的地址。</p>
+<pre><code class="language-pragma">import &quot;@openzeppelin/contracts/token/ERC20/ERC20.sol&quot;;
+contract GLDToken is ERC20 {
+    constructor(uint256 initialSupply) public ERC20(&quot;Gold&quot;, &quot;GLD&quot;) {
+        _mint(msg.sender, initialSupply);
+    }
+}
+</code></pre>
+<p>就是这样！部署后，我们将能够查询部署者的余额：</p>
+<pre><code>&gt; GLDToken.balanceOf(deployerAddress)
+1000000000000000000000
+我们也可以将这些代币转移到其他账户：
+
+&gt; GLDToken.transfer(otherAddress, 300000000000000000000)
+&gt; GLDToken.balanceOf(otherAddress)
+300000000000000000000
+&gt; GLDToken.balanceOf(deployerAddress)
+700000000000000000000
+</code></pre>
+<h2 id="关于decimals">关于decimals</h2>
+<p>通常，您希望能够将您的代币分成任意数量：例如，如果您拥有5 GLD，您可能想发送1.5 GLD给朋友，并留给3.5 GLD自己。不幸的是，Solidity 和 EVM 不支持这种行为：只能使用整数（整数）。为了解决这个问题，ERC20提供了一个decimals字段，用于指定令牌有多少个小数位。为了能够转移1.5 GLD，decimals必须至少1，因为该数字有一个小数位。就像ETH的最小单位是wei。1eth = 10^18wei。<br>
+在openzeppelin中默认情况下，ERC20使用值18for decimals。要使用不同的值，您需要在构造函数中调用_setupDecimals。<br>
+因此，如果您想5使用 18 位小数的代币合约发送代币，调用的方法实际上是：<br>
+<code>transfer(recipient, 5 * 10^18);</code></p>
 
             </div>
             
