@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>ABI编码函数 | Tangminjie Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://tangminjie.github.io/favicon.ico?v=1650961950655">
+<link rel="stylesheet" href="https://tangminjie.github.io/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="什么是abi
+ABI-Application Binary Interface，应用二进制接口说明。
+ABI可以简单理解成区块链外部与合约进行交互以及合约和合约之间进行交互的一种标准方式。数据会根据其类型按照这份手册中说明的方法进行编码。这..." />
+    <meta name="keywords" content="solidity" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://tangminjie.github.io">
+        <img src="https://tangminjie.github.io/images/avatar.png?v=1650961950655" class="site-logo">
+        <h1 class="site-title">Tangminjie Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/nEjwCuZ71/" class="site-nav">
+            solidity
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/RGPrDS_1V/" class="site-nav">
+            TypeScript
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/TCMNyywPJ" class="site-nav">
+            ERC协议
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://tangminjie.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">ABI编码函数</h2>
+            <div class="post-date">2022-04-26</div>
+            
+            <div class="post-content" v-pre>
+              <h1 id="什么是abi">什么是abi</h1>
+<p>ABI-Application Binary Interface，应用二进制接口说明。<br>
+ABI可以简单理解成区块链外部与合约进行交互以及合约和合约之间进行交互的一种标准方式。数据会根据其类型按照这份手册中说明的方法进行编码。这种编码并不是可以自描述的，而是需要一种特定的概要（schema）来进行解码。在以太坊中主要用于solidity合约的函数调用，以及反向编码读取数据的中的方法。</p>
+<h1 id="solidityabi编码函数">solidityABI编码函数</h1>
+<pre><code class="language-abi.encode(…)">abi.encodePacked(…) returns (bytes)：计算参数的紧密打包编码
+abi. encodeWithSelector(bytes4 selector, …) returns (bytes)： 计算函数选择器和参数的 ABI 编码
+abi.encodeWithSignature(string signature, …) returns (bytes): 等价于* abi.encodeWithSelector(bytes4(keccak256(signature), …)
+</code></pre>
+<h2 id="solidityabi编码函数-实现细节">solidityABI编码函数 实现细节</h2>
+<pre><code class="language-函数选择器，官方文档定义如下：">一个函数调用数据的前 4 字节，指定了要调用的函数。这就是某个函数签名的 Keccak（SHA-3）哈希的前 4 字节（高位在左的大端序）（译注：这里的“高位在左的大端序“，指最高位字节存储在最低位地址上的一种串行化编码方式，即高位字节在左）。 这种签名被定义为基础原型的规范表达，基础原型即是函数名称加上由括号括起来的参数类型列表，参数类型间由一个逗号分隔开，且没有空格。
+</code></pre>
+<p>简单来说，函数选择器就是通过函数名来参数来标识函数，可以用于不同合约之间的函数调用。<br>
+合约中函数调用截取调用数据的前四个字节（0x之后），就是将函数名以及参数类型进行签名处理（Keccak–Sha3）。</p>
+<h2 id="solidityabi编码函数实现">solidityABI编码函数实现：</h2>
+<pre><code class="language-contract">    uint storedData;
+
+    function set(uint x) public {
+        storedData = x;
+    }
+
+    function abiEncode(uint x) public view returns (bytes memory) {
+        abi.encode(x);  // 计算1的ABI编码
+        return abi.encodeWithSignature(&quot;set(uint256)&quot;, x); //计算函数set(uint256) 及参数1 的ABI 编码
+    }
+}
+</code></pre>
+<p>remix部署合约之后，调用abiEncode()将会产生如下数据输出：<br>
+abi.encode(21)<br>
+0x60fe47b10000000000000000000000000000000000000000000000000000000000000015<br>
+其中60fe47b1便是对应的set()函数的签名处理：</p>
+<pre><code class="language-["> {
+ 	&quot;constant&quot;: false,
+ 	&quot;inputs&quot;: [
+ 		{
+ 			&quot;internalType&quot;: &quot;uint256&quot;,
+ 			&quot;name&quot;: &quot;value&quot;,
+ 			&quot;type&quot;: &quot;uint256&quot;
+ 		}
+ 	],
+ 	&quot;name&quot;: &quot;set&quot;,
+ 	&quot;outputs&quot;: [],
+ 	&quot;payable&quot;: false,
+ 	&quot;stateMutability&quot;: &quot;nonpayable&quot;,
+ 	&quot;type&quot;: &quot;function&quot;
+ }
+]
+</code></pre>
+<p>传入参数为21 对于16进制为15,合约函数名与函数参数，每个参数最终要被补全为32个字节。<br>
+**  abiDetail:  **</p>
+<pre><code class="language-constant">type: 调用参数类型： string，function，callback，contsructor
+name: 调用参数名称
+payable： 是否支持ether
+stateMutability:(状态可变性) - pure - view - payable - nonpayable
+outputs: 调用输出值
+input：{
+name: 参数名称
+type: 参数类型
+}
+</code></pre>
+<h2 id="abiencode-与abiencodepacked">abi.encode 与abi.encodePacked</h2>
+<p>对函数打包处理，但是处理方式不一样，对于小于32字节类型的参数，前者会将所有参数自动补全到32个字节，后者不会自动补全。</p>
+<pre><code class="language-function">      bytes memory _bts =&quot;Hello,world!&quot;;
+    return (abi.encodePacked(_bts),abi.encode(_bts));
+  }
+}
+output:
+0:
+bytes: 0x48656c6c6f2c776f726c6421
+1:
+bytes: 0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000c48656c6c6f2c776f726c64210000000000000000000000000000000000000000
+</code></pre>
+<h2 id="关于使用abiencodewithsignaturestring-signature-returns-bytes">关于使用abi.encodeWithSignature(string signature, …) returns (bytes)</h2>
+<p>主要应用场景： 函数调用:</p>
+<pre><code class="language-contract">    uint storedData;
+
+    function set(uint x) public {
+        storedData = x;
+    }
+
+    function abiEncode() public constant returns (bytes) {
+        abi.encode(1);  // 计算1的ABI编码
+        return abi.encodeWithSignature(&quot;set(uint256)&quot;, 1); //计算函数set(uint256) 及参数1 的ABI 编码
+    }
+}
+</code></pre>
+<h2 id="web3-abi-编码函数">Web3 ABI 编码函数</h2>
+<p>另一个web3提供相应的API，例如使用web3计算函数选择器的方式如下：<br>
+<code>web3.eth.abi.encodeFunctionSignature('myMethod(uint256,string)');</code></p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://tangminjie.github.io/tag/nEjwCuZ71/" class="tag">
+                    solidity
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://tangminjie.github.io/post/erc-777/">
+                  <h3 class="post-title">
+                    ERC-777
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
