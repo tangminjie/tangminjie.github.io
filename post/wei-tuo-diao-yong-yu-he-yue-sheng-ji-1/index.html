@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>委托调用与合约升级·1 | Tangminjie Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://tangminjie.github.io/favicon.ico?v=1650993905487">
+<link rel="stylesheet" href="https://tangminjie.github.io/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="在传统的WEB2开发中我们习惯对产品进行升级迭代，这也是必要的，因为在开发中我们要经常进行BUG的修复和新特性的更新。但是在智能合约中，我们部署上去的合约数据一旦上链就无法隐藏和更改。这也是以太坊去中心化的核心。
+但是随之而来的问题也很明显..." />
+    <meta name="keywords" content="solidity" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://tangminjie.github.io">
+        <img src="https://tangminjie.github.io/images/avatar.png?v=1650993905487" class="site-logo">
+        <h1 class="site-title">Tangminjie Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/nEjwCuZ71/" class="site-nav">
+            solidity
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/RGPrDS_1V/" class="site-nav">
+            TypeScript
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/TCMNyywPJ" class="site-nav">
+            ERC协议
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://tangminjie.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">委托调用与合约升级·1</h2>
+            <div class="post-date">2022-04-26</div>
+            
+            <div class="post-content" v-pre>
+              <p>在传统的WEB2开发中我们习惯对产品进行升级迭代，这也是必要的，因为在开发中我们要经常进行BUG的修复和新特性的更新。但是在智能合约中，我们部署上去的合约数据一旦上链就无法隐藏和更改。这也是以太坊去中心化的核心。<br>
+但是随之而来的问题也很明显，当合约部署到链上之后，就再也无法改变源码。  当部署的合约存在bug或者安全漏洞时（合约审计并没有十分完善的代码审核）。在早期就只能重新部署合约，或者引入一个新的合约并且将数据迁移。这都会改变合约的地址，对于社区或者投资人和项目本身都是不利的。<br>
+所以后来引入了合约升级方案。</p>
+<h1 id="委托调用">委托调用</h1>
+<p>在合约升级之前我们必须要知道的一个概念就是委托调用。这也是合约升级能够实现的一个重要技术点。<br>
+在编写 Ethereum SmartContract 代码时，在某些情况下我们需要与其他合约进行交互。在Solidity 中，为此目的，有几种方法可以实现这一目标。<br>
+**  1.如果我们知道目标合约 ABI，我们可以直接使用函数签名  **<br>
+假设我们部署了一个名为“Storage”的简单合约，允许用户保存一个值。</p>
+<pre><code class="language-pragma">contract Storage {
+    uint public val;
+constructor(uint v) public {
+        val = v;
+    }
+function setValue(uint v) public {
+        val = v;
+    }
+}
+</code></pre>
+<p>我们要部署另一个名为“Machine”的合约，它是“Storage”合约的调用者。“Machine”引用“Storage”合约并更改其值。</p>
+<pre><code class="language-pragma">import &quot;./Storage.sol&quot;;
+contract Machine {
+    Storage public s;
+constructor(Storage addr) public {
+        s = addr;
+        calculateResult = 0;
+    }
+    
+    function saveValue(uint x) public returns (bool) {
+        s.setValue(x);
+        return true;
+    }
+function getValue() public view returns (uint) {
+        return s.val();
+    }
+}
+</code></pre>
+<p>在这种情况下，我们知道“Storage”的ABI及其地址，这样我们就可以用该地址初始化现有的“Storage”合约，ABI告诉我们如何调用“Storage”合约的函数。我们可以看到“Machine”合约调用“Storage”setValue()功能。<br>
+并编写测试代码检查“Machine”是否saveValue()真的调用了“Storage”setValue()函数并改变其状态。</p>
+<pre><code class="language-const">const MachineFactory = artifacts.require('Machine');
+contract('Machine', accounts =&gt; {
+  const [owner, ...others] = accounts;
+beforeEach(async () =&gt; {
+    Storage = await StorageFactory.new(new BN('0'));
+    Machine = await MachineFactory.new(Storage.address);
+  });
+describe('#saveValue()', () =&gt; {
+    it('should successfully save value', async () =&gt; {
+      await Machine.saveValue(new BN('54'));
+      (await Storage.val()).should.be.bignumber.equal(new BN('54'));
+    });
+  });
+});
+</code></pre>
+<p>查看测试结果：</p>
+<pre><code class="language-Contract:">  After initalize
+    #saveValue()
+      ✓ should successfully save value (56ms)
+1 passing (56ms)
+</code></pre>
+<p>**  2.如果我们不知道目标合约 ABI，请使用 call 或 delegatecall  **<br>
+在解释以太坊 Solidity中call()和delegatecall()之前，先看看 EVM 如何保存合约的变量。<br>
+**  EVM 如何将字段变量保存到 Storage  **<br>
+在以太坊中，保存合约字段变量的空间有两种。一个是“memory”，另一个是“storage”。storage声明的数据会永久的储存在区块链上。<br>
+那么单个合约中的这么多变量怎么可能不重叠彼此的地址空间呢？EVM 将槽号分配给字段变量。</p>
+<pre><code class="language-contract">    uint256 first;  // slot 0
+    uint256 second; // slot 1
+}
+</code></pre>
+<p>因为first首先在“Sample1”中声明，所以它被分配了 0 个插槽。每个不同的变量由它的槽号来区分。<br>
+在 EVM 中，它在智能合约存储中有 2²⁵⁶ slot，每个 slot 可以保存 32 字节大小的数据。<br>
+**  call和delegatecall的区别  **<br>
+call委托调用是用户地址调用代理合约去调用业务合约，修改的是被调用者的storage，并且被调用合约的msg.sender是代理合约。<br>
+delegatecall 是修改的代理合约本身的storage，并且被调用合约的msg。sender是用户地址。<br>
+可以理解成delegatecall只是使用了业务合约的接口，所有的数据状态变化全都是代理合约本身。<br>
+**  测试用例  **<br>
+注意：在使用delegatecall的时候要十分注意调用者合约和委托调用合约之间变量字段的顺序，这涉及到合约的插槽顺序，我们用一个例子来说明：<br>
+首先编码一个调用者合约：</p>
+<pre><code class="language-pragma">import &quot;./Storage.sol&quot;;
+contract Machine {
+    Storage public s;
+    
+    uint256 public calculateResult;
+    
+    address public user;
+  
+    event AddedValuesByDelegateCall(uint256 a, uint256 b, bool success);
+    event AddedValuesByCall(uint256 a, uint256 b, bool success);
+    
+    constructor(Storage addr) public {
+        ...
+        calculateResult = 0;
+    }
+    
+  ...
+    
+    function addValuesWithDelegateCall(address calculator, uint256 a, uint256 b) public returns (uint256) {
+        (bool success, bytes memory result) = calculator.delegatecall(abi.encodeWithSignature(&quot;add(uint256,uint256)&quot;, a, b));
+        emit AddedValuesByDelegateCall(a, b, success);
+        return abi.decode(result, (uint256));
+    }
+    
+    function addValuesWithCall(address calculator, uint256 a, uint256 b) public returns (uint256) {
+        (bool success, bytes memory result) = calculator.call(abi.encodeWithSignature(&quot;add(uint256,uint256)&quot;, a, b));
+        emit AddedValuesByCall(a, b, success);
+        return abi.decode(result, (uint256));
+    }
+}
+</code></pre>
+<p>委托调用合约：</p>
+<pre><code class="language-pragma">contract Calculator {
+    uint256 public calculateResult;
+    
+    address public user;
+    
+    event Add(uint256 a, uint256 b);
+    
+    function add(uint256 a, uint256 b) public returns (uint256) {
+        calculateResult = a + b;
+        assert(calculateResult &gt;= a);
+        
+        emit Add(a, b);
+        user = msg.sender;
+        
+        return calculateResult;
+    }
+}
+</code></pre>
+<p>测试脚本：</p>
+<pre><code class="language-describe('#addValuesWithDelegateCall()',">  let Calculator;
+  
+  beforeEach(async () =&gt; {
+    Calculator = await CalculatorFactory.new();
+  });
+  
+  it('should successfully add values with delegate call', async () =&gt; {
+    const result = await Machine.addValuesWithDelegateCall(Calculator.address, new BN('1'), new BN('2'));
+expectEvent.inLogs(result.logs, 'AddedValuesByDelegateCall', {
+      a: new BN('1'),
+      b: new BN('2'),
+      success: true,
+    });
+(result.receipt.from).should.be.equal(owner.toString().toLowerCase());
+    (result.receipt.to).should.be.equal(Machine.address.toString().toLowerCase());
+// Calculator storage DOES NOT CHANGE!
+    (await Calculator.calculateResult()).should.be.bignumber.equal(new BN('0'));
+    
+    // Only calculateResult in Machine contract should be changed
+    (await Machine.calculateResult()).should.be.bignumber.equal(new BN('3'));
+(await Machine.user()).should.be.equal(owner);
+    (await Calculator.user()).should.be.equal(constants.ZERO_ADDRESS);
+  });
+});
+</code></pre>
+<p>我们想要测试的是：<br>
+1.因为上下文在“Calculator”而不是“Machine”上，所以添加结果应该保存到“Calculator”存储中。<br>
+2.Calculator  calculateResult应该是0，user.address应该是0地址。<br>
+3.Machine calculateResult应该是3，user是EOA。<br>
+但是允许TEST的结果是我们失败了：</p>
+<pre><code class="language-0">1 failing
+1) Contract: Machine
+     After initalize
+       #addValuesWithDelegateCall()
+         should successfully add values with delegate call:
+AssertionError: expected '562046206989085878832492993516240920558397288279' to equal '3'
+    + expected - actual
+-562046206989085878832492993516240920558397288279
+    +3
+    ```
+正如我们之前提到的，每个字段变量都有自己的插槽。而当我们委托调用“Calculator”时，上下文在“Machine”上，但槽号基于“Calculator”。因此，因为“计算器”逻辑用 覆盖地址Storage，calculateResult所以测试失败。
+基于这些知识，我们可以找到“562046206989085878832492993516240920558397288279”的来源。它是 EOA 的十进制版本。
+所以要解决这个问题，我们需要改变“Machine”字段变量的顺序。使它和“Calculator”插槽对应：
+```  uint256 public calculateResult;
+    
+    address public user;
+    
+    Storage public s;
+</code></pre>
+<p>总结：<br>
+如果我们知道目标函数的ABI，我们可以直接使用目标函数签名<br>
+如果我们不知道目标函数的 ABI，我们可以使用call(), 或delegatecall(). 但是在 的情况下delegatecall()，我们需要关心字段变量的顺序。</p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://tangminjie.github.io/tag/nEjwCuZ71/" class="tag">
+                    solidity
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://tangminjie.github.io/post/abi-bian-ma-han-shu/">
+                  <h3 class="post-title">
+                    ABI编码函数
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
