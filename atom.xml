@@ -2,13 +2,80 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://tangminjie.github.io</id>
     <title>Tangminjie Blog</title>
-    <updated>2022-04-26T17:33:33.527Z</updated>
+    <updated>2022-05-05T07:22:46.807Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://tangminjie.github.io"/>
     <link rel="self" href="https://tangminjie.github.io/atom.xml"/>
     <logo>https://tangminjie.github.io/images/avatar.png</logo>
     <icon>https://tangminjie.github.io/favicon.ico</icon>
     <rights>All rights reserved 2022, Tangminjie Blog</rights>
+    <entry>
+        <title type="html"><![CDATA[AMM原理，滑点，和无偿损失]]></title>
+        <id>https://tangminjie.github.io/post/amm-yuan-li-hua-dian-he-wu-chang-sun-shi/</id>
+        <link href="https://tangminjie.github.io/post/amm-yuan-li-hua-dian-he-wu-chang-sun-shi/">
+        </link>
+        <updated>2022-04-29T08:47:02.000Z</updated>
+        <content type="html"><![CDATA[<h1 id="amm自动化做市商">AMM自动化做市商</h1>
+<p>DeFi领域去中心化交易所DEX能够崛起的一个核心原因是引入了自动做市商（AMM）模式。AMM又称自动化做市商，它是去中心化交易所（DEX）最为关键的技术之一，已被证明是最具影响力的DeFi创新之一，它们能够为一系列不同代币创建和运行可公开获取的链上流动性。<br>
+任何市场都可能存在没有足够的有机流动性以支持活跃的交易的状况，做市商本质上就是通过促进这些市场中不会发生的交易来缓解这一问题的代理商。在传统的CEX里许多做市商都是专业的团队或是机构。而AMM(Automated Market Maker)，相当于把他们这个角色给真正的去中心化了。<br>
+每个用户都可以把自己的代币扔到流动池里，成为一个小的做市商，然后享受交易对手续费分红。且流动池资金是去中心化开源合约控制，AMM交易数据全部上链，不像传统CEX的平台币销毁或是分红，毕竟没有人知道他们手续费真的挣了多少，平台币流通了多少等等。而在AMM这里，一切透明。更重要的是，你的资产依旧在你个人控制的钱包里，而不是进了交易平台，所以资产依旧100%安全，这是传统CEX无论如何不可能实现的。</p>
+<h2 id="amm实现原理">AMM实现原理</h2>
+<p>AMM通过数学公式对资产进行定价。资产定价通过定价算法完成，不再使用传统交易平台常用的订单簿。定价公式随不同协议而变化。例如，Uniswap使用的公式为x * y= k，其中x代表流动性资金池中一种代币的数量，y则表示另一种代币的数量。在此公式中，k是一个固定常数，表明池中的流动性总量必须保持不变。<br>
+我们假设UNISWAP一个交易池中是ETH－DAI，第一个流动性提供者放进去了ａ个ETH和b个DAI。这时候这个交易对，对应的初始值是 x＝ａ， y＝ｂ；那K的初始值＝ａ＊ｂ；<br>
+此时ETH的价格就是b/a，DAI的价格＝a/b；在K不变的情况下，如果这个交易池有trader T进来，想用ｗ个EHT换DAI。他会以什么样的价格拿到多少DAI呢？<br>
+在恒定乘积下，这个运算过程是这样的：<br>
+<code>y’=K/(x+ｗ)</code><br>
+其中y’等于此次交易后，交易池中的DAI的个数。由此可知，T得到的DAI的个数=y-y’;这些DAI的价格=w/(y-y’).<br>
+所以你发现了吗？在交易者告诉平台自己要兑换的数量之前，他能拿到什么价格是不确定的。这就让UNISWAP的价格获取跟中心化交易所和利用价格预言机的交易所完全区分开了。<br>
+还有别忘了，我们假定的前提条件是K不变，那哪些情况下K值是要改变的？答案有二，一是交易费，二是流动性。<br>
+<strong>交易费</strong><br>
+用户每一次的交易，需要交0.3%的手续费。拿上面交易举例，我们为了简化计算忽略了手续费，真实的情况是uniswap平台在计算出y’后会扣除0.3%y’的手续费，完成交易后，这0.3%dy会被添加到流动性池里，此时K值就变成了 xy+x0.3%y’=x*(y+0.3%y).<br>
+所以，你发现了吗？K值变大了。反之亦然，减少流动性，会减少K值。换言之，恒定乘积算法的K值并不恒定，每一笔交易都会影响K值。<br>
+<strong>流动性</strong><br>
+流动性是怎么改变K值的呢？当第二个人在一个交易对中按照比例增加了ETH和DAI的数量，X和Y就同时增加了，很显然，K的值就是增加的；如果第一个人取走自己的交易对，K值就减少，非常简单。</p>
+<h2 id="滑点">滑点</h2>
+<p>滑点是指成交价与下单时的预期价不同，通常是由于从下单到成交时的价格变动造成的。当我们在dex上交易的时候可以手动设置滑点。当交易价格超过我们可以接受的滑点范围时交易会失败。<br>
+<strong>怎样才能避免滑点</strong><br>
+1.我们无法完全避免滑点，但可以减少滑点带来的风险，将损失降到最低。首先，只在具有良好流动性和完善基础设施的平台上进行交易。最好的办法是选择高交易量、高流动性的钱币。<br>
+2.可以选择更容易成交的小额交易，而不是一下子下一笔大单。如果你下的单超过了现有的流动性下DEX是无法撮合交易的。如果把大单分解成几个小单，就更有可能成交，不会有流动性不足的情况。</p>
+<h1 id="无偿损失">无偿损失</h1>
+<p>在DEFI协议中我们可以组LP来为流动池提供流动性，以收取挖矿收益或者手续费收益。例如UNISWAP中的0.3%的手续费会按LP比例来分配收益。因提供流动性需要将两种代币质押到LP池子，如果两个代币的价格发生波动，根据恒定乘积公式 X*Y=K，质押的代币数量会发生变化，按U本位计价在比价波动前后，会承担额外的损失，这部分额外损失就是我们常说的无常损失。</p>
+<pre><code>以ETH/USDT这个交易对为例，在ETH价格为$500时，我们可以提供这样的资金：
+ETH： 20枚
+USDT： $10,000
+总值： $20,000 这是池中的所有的资金。
+x*x*eth单价=20000
+如果ETH的外部价格上涨到$550，就会有投机者来这里买入便宜的ETH，并把价格推高到$550。
+按 x * y = k 的Uniswap自动做市商公式：
+20 * 10,000 = 200,000 （ETH=$500）
+19.07 * 10488 = 200,000（ETH=$550）
+投机者可以用$488来买走0.93ETH，从而把价格推高到跟市场一致。而他的成本是：ETH=$524.7，有一定的套利空间。
+在新的状态下（ETH=$550），对于LP来说
+ETH：19.07枚
+USDT：$10488
+总值：$20976
+但是，如果我们这一对ETH/USDT资金没有来放入流动性池，情况是：
+总值：$21000
+因此，因为ETH上涨，我们损失了$24。这就是无常损失。
+如果ETH价格跌到了$400，情况会怎么样呢？
+按 x * y = k 的Uniswap自动做市商公式：
+20 * 10,000 = 200,000 （ETH=$500）
+22.36 * 8944 = 200,000（ETH=$400）
+在新的状态下（ETH=$400），对于LP来说
+ETH：22.36枚
+USDT：$8944
+总值：$17888
+但是，如果我们这一对ETH/USDT资金没有来放入流动性池，情况是：
+总值：$18000
+因此，因为ETH下跌，我们损失了$112。也就是说，价格下跌，我们也会遭遇无常损失。唯有价格不动，LP才不会有无常损失。
+</code></pre>
+<p>当我们把一对ETH/USDT存入流动性池子中，变化是：<br>
+● 当ETH价格上涨时，系统实际上帮我们自动卖出ETH。<br>
+● 当ETH价格下跌时，系统实际上帮我们自动买入ETH。<br>
+因此，我们的第一选择是做稳定币池的LP，因为它们之间价格几乎没有波动，其次是做ETH/BTC的LP，因为二者之间往往是同向的，比整体市场波动小。<br>
+总的来说，流动性提供者承受了无常损失，提供了流动性服务，并因无常损失而获得了相应的回报</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[委托调用与合约升级-1]]></title>
         <id>https://tangminjie.github.io/post/wei-tuo-diao-yong-yu-he-yue-sheng-ji-1/</id>
@@ -203,7 +270,11 @@ AssertionError: expected '562046206989085878832492993516240920558397288279' to e
         <link href="https://tangminjie.github.io/post/wei-tuo-diao-yong-yu-he-yue-sheng-ji-2/">
         </link>
         <updated>2022-04-26T09:13:58.000Z</updated>
-        <content type="html"><![CDATA[<p>test</p>
+        <content type="html"><![CDATA[<h1 id="合约升级">合约升级</h1>
+<p>**  合约升级的三种模式： **<br>
+1.继承存储模式 Inherited Storage<br>
+2.永久存储模式 Eternal Storage<br>
+3.非结构化存储模式 Unstructured Storage</p>
 ]]></content>
     </entry>
     <entry>
@@ -2197,250 +2268,6 @@ type(I).interfaceId             //返回接口``I`` 的 bytes4 类型的接口 I
 type(T).min                        //返回整型T的最小值
 type(T).max                        //返回整型T的最大值
 </code></pre>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[类型]]></title>
-        <id>https://tangminjie.github.io/post/solidity-leixing/</id>
-        <link href="https://tangminjie.github.io/post/solidity-leixing/">
-        </link>
-        <updated>2022-04-17T15:49:30.000Z</updated>
-        <content type="html"><![CDATA[<p>Solidity 是一种静态类型语言，这意味着每个变量（状态变量和局部变量）都需要在编译时指定变量的类型。<br>
-Solidity 提供了几种基本类型，并且基本类型可以用来组合出复杂类型。<br>
-<strong>需要注意以下几点:</strong><br>
-1.“undefined”或“null”值的概念在Solidity中不存在。<br>
-2.变量声明后将有默认初始值，其初始值字节表示全部为零。<br>
-3.bool 类型的默认值是 false。<br>
-4.uint 或 int 类型的默认值是 0 。<br>
-5.静态大小的数组和 bytes1 到 bytes32 ，每个单独的元素将被初始化为与其类型相对应的默认值。<br>
-6.对于动态大小的数组 bytes 和 string 类型，其默认缺省值是一个空数组或空字符串。<br>
-7.对于 enum 类型, 默认值是第一个成员。</p>
-<h2 id="值类型">值类型</h2>
-<h4 id="布尔类型">布尔类型</h4>
-<p>bool：可能的取值为字面常量值 true 和 false 。</p>
-<h4 id="整型">整型</h4>
-<p>int / uint ：分别表示有符号和无符号的不同位数的整型变量。 支持关键字 uint8 到 uint256 （无符号，从 8 位到 256 位）以及 int8 到 int256，以 8 位为步长递增。 uint 和 int 分别是 uint256 和 int256 的别名。<br>
-<strong>警告</strong><br>
-Solidity中的整数是有取值范围的。 例如 uint32 类型的取值范围是 0 到 2 ** 32-1 。 0.8.0 开始，算术运算有两个计算模式：一个是 “wrapping”（截断）模式或称 “unchecked”（不检查）模式，一个是”checked” （检查）模式。 默认情况下，算术运算在 “checked” 模式下，即都会进行溢出检查，如果结果落在取值范围之外，调用会通过 失败异常 回退。 你也可以通过 <code>unchecked { ... }</code> 切换到 “unchecked”模式，更多可参考 unchecked .</p>
-<h4 id="定长浮点型">定长浮点型</h4>
-<p><strong>警告</strong><br>
-Solidity 还没有完全支持定长浮点型。可以声明定长浮点型的变量，但不能给它们赋值或把它们赋值给其他变量。<br>
-fixed / ufixed：表示各种大小的有符号和无符号的定长浮点型。 在关键字 ufixedMxN 和 fixedMxN 中，M 表示该类型占用的位数，N 表示可用的小数位数。 M 必须能整除 8，即 8 到 256 位。 N 则可以是从 0 到 80 之间的任意数。 ufixed 和 fixed 分别是 ufixed128x19 和 fixed128x19 的别名。</p>
-<h4 id="地址类型-address">地址类型 Address</h4>
-<p>地址类型有两种形式，他们大致相同：<br>
-1.address：保存一个20字节的值（以太坊地址的大小）。<br>
-2.address payable ：可支付地址，与 address 相同，不过有成员函数 transfer 和 send 。<br>
-这种区别背后的思想是 address payable 可以接受以太币的地址，而一个普通的 address 则不能。<br>
-<strong>类型转换:</strong><br>
-允许从 address payable 到 address 的隐式转换，而从 address 到 address payable 必须显示的转换, 通过<code>payable(&lt;address&gt;)</code> 进行转换。<br>
-address 允许和 uint160、 整型字面常量、bytes20 及合约类型相互转换。<br>
-只能通过 payable(...) 表达式把 address 类型和合约类型转换为 address payable。 只有能接收以太币的合约类型，才能够进行此转换。例如合约要么有 receive 或可支付的fallback函数。 注意 payable(0) 是有效的，这是此规则的例外。<br>
-<strong>地址类型成员变量</strong><br>
-<strong>balance 和 transfer</strong><br>
-可以使用 balance 属性来查询一个地址的余额， 也可以使用 transfer 函数向一个可支付地址（payable address）发送 以太币Ether （以 wei 为单位）：</p>
-<pre><code class="language-address">address myAddress = this;
-if (x.balance &lt; 10 &amp;&amp; myAddress.balance &gt;= 10) x.transfer(10);
-</code></pre>
-<p>如果当前合约的余额不够多，则 transfer 函数会执行失败，或者如果以太转移被接收帐户拒绝， transfer 函数同样会失败而进行回退。<br>
-<strong>注意</strong><br>
-如果 x 是一个合约地址，它的代码（更具体来说是, 如果有receive函数, 执行 receive 接收以太函数, 或者存在fallback函数,执行 Fallback 回退函数 函数）会跟 transfer 函数调用一起执行（这是 EVM 的一个特性，无法阻止）。 如果在执行过程中用光了 gas 或者因为任何原因执行失败，以太币Ether 交易会被打回，当前的合约也会在终止的同时抛出异常。<br>
-当然因为这个特性的存在，我们在设计合约的时候需要考虑到可重入攻击（利用transfer执行之后回调用fallback进入递归反复转账）<br>
-<strong>send</strong><br>
-send 是 transfer 的低级版本。如果执行失败，当前的合约不会因为异常而终止，但 send 会返回 false。<br>
-<strong>注意</strong><br>
-send 是 transfer 的低级版本。如果执行失败，当前的合约不会因为异常而终止，但 send 会返回 false。在使用 send 的时候会有些风险：如果调用栈深度是 1024 会导致发送失败（这总是可以被调用者强制），如果接收者用光了 gas 也会导致发送失败。 所以为了保证 以太币Ether 发送的安全，一定要检查 send 的返回值，使用 transfer 或者更好的办法： 使用接收者自己取回资金的模式。<br>
-<strong>call， delegatecall 和 staticcall</strong><br>
-为了与不符合 应用二进制接口Application Binary Interface(ABI) 的合约交互，或者要更直接地控制编码，提供了函数 call，delegatecall 和 staticcall 。 它们都带有一个 bytes memory 参数和返回执行成功状态（bool）和数据（bytes memory）。<br>
-函数 abi.encode，abi.encodePacked，abi.encodeWithSelector 和 abi.encodeWithSignature 可用于编码结构化数据。</p>
-<pre><code class="language-bytes">(bool success, bytes memory returnData) = address(nameReg).call(payload);
-require(success);
-</code></pre>
-<p>此外，为了与不符合 应用二进制接口Application Binary Interface(ABI) 的合约交互，于是就有了可以接受任意类型任意数量参数的 call 函数。 这些参数会被打包到以 32 字节为单位的连续区域中存放。 其中一个例外是当第一个参数被编码成正好 4 个字节的情况。 在这种情况下，这个参数后边不会填充后续参数编码，以允许使用函数签名。</p>
-<pre><code class="language-address">nameReg.call(&quot;register&quot;, &quot;MyName&quot;);
-nameReg.call(bytes4(keccak256(&quot;fun(uint256)&quot;)), a);
-</code></pre>
-<p>可以使用gas修改器，调整提供的 gas 数量，也能控制提供的 以太币Ether 的值。 修改器modifier 可以联合使用。每个修改器出现的顺序不重要。</p>
-<pre><code class="language-address(nameReg).call{gas:"></code></pre>
-<p>以类似的方式，可以使用函数 delegatecall ：区别在于只调用给定地址的代码（函数），其他状态属性如（存储，余额 …）都来自当前合约。 delegatecall 的目的是使用另一个合约中的库代码。 用户必须确保两个合约中的存储结构都适合委托调用 （delegatecall）。</p>
-<h4 id="合约类型">合约类型</h4>
-<p>1.只有当合约具有 接收receive函数 或 payable 回退函数时，才能显式和 address payable 类型相互转换 转换仍然使用 address(x) 执行， 如果合约类型没有接收或payable 回退功能，则可以使用 payable(address(x)) 转换为 address payable 。<br>
-2,.您还可以实例化合约（即新创建一个合约对象）,使用new创建合约。<br>
-3.合约类型的成员是合约的外部函数及 public 的 状态变量。<br>
-4.对于合约 C 可以使用 type(C) 获取合约的类型信息，</p>
-<h4 id="定长字节数组">定长字节数组</h4>
-<p>关键字有：bytes1， bytes2， bytes3， …， bytes32。<br>
-成员变量：.length 表示这个字节数组的长度（只读）.<br>
-可以将 byte[] 当作字节数组使用，但这种方式非常浪费存储空间，准确来说，是在传入调用时，每个元素会浪费 31 字节。 更好地做法是使用 bytes。</p>
-<h4 id="边长字节数组">边长字节数组</h4>
-<h4 id="地址字面常量">地址字面常量</h4>
-<h4 id="有理数和整数字面常量">有理数和整数字面常量</h4>
-<h4 id="字符串字面常量及类型">字符串字面常量及类型</h4>
-<h4 id="unicode-字面常量">Unicode 字面常量</h4>
-<p>常规字符串文字只能包含ASCII，而Unicode文字（以关键字unicode为前缀）可以包含任何有效的UTF-8序列。 它们还支持与转义序列完全相同的字符作为常规字符串文字。</p>
-<pre><code class="language-string"></code></pre>
-<h4 id="十六进制字面常量">十六进制字面常量</h4>
-<h4 id="枚举类型">枚举类型</h4>
-<p>枚举是在Solidity中创建用户定义类型的一种方法。 它们是显示所有整型相互转换，但不允许隐式转换。 从整型显式转换枚举，会在运行时检查整数时候在枚举范围内，否则会导致异常（ Panic异常 ）。 枚举需要至少一个成员,默认值是第一个成员，枚举不能多于 256 个成员。<br>
-数据表示与C中的枚举相同：选项从“0”开始的无符号整数值表示。</p>
-<pre><code class="language-//">pragma solidity &gt;=0.4.16  &lt;0.9.0;
-
-contract test {
-    enum ActionChoices { GoLeft, GoRight, GoStraight, SitStill }
-    ActionChoices choice;
-    ActionChoices constant defaultChoice = ActionChoices.GoStraight;
-
-    function setGoStraight() public {
-        choice = ActionChoices.GoStraight;
-    }
-
-    // 由于枚举类型不属于 |ABI| 的一部分，因此对于所有来自 Solidity 外部的调用，
-    // &quot;getChoice&quot; 的签名会自动被改成 &quot;getChoice() returns (uint8)&quot;。
-
-    function getChoice() public view returns (ActionChoices) {
-        return choice;
-    }
-
-    function getDefaultChoice() public pure returns (uint) {
-        return uint(defaultChoice);
-    }
-}
-</code></pre>
-<h4 id="函数类型">函数类型</h4>
-<p>1.内部（internal） 函数类型，外部（external） 函数类型，公共函数（public），私有函数（private），函数类型默认是内部函数，因此不需要声明 internal 关键字<br>
-2.类型转换：<br>
-pure 函数可以转换为 view 和 non-payable 函数<br>
-view 函数可以转换为 non-payable 函数<br>
-payable 函数可以转换为 non-payable 函数，其他的转换则不可以。<br>
-3.public（或 external）函数都有下面的成员：<br>
-.address 返回函数的合约地址。<br>
-.selector 返回 ABI 函数选择器</p>
-<h2 id="引用类型">引用类型</h2>
-<p>1.memory 内存即数据在内存中，因此数据仅在其生命周期内（函数调用期间）有效。不能用于外部调用。<br>
-2.存储 storage 状态变量保存的位置，只要合约存在就一直存储．<br>
-3.调用数据 calldata 用来保存函数参数的特殊数据位置，是一个只读位置。</p>
-<h4 id="数据位置">数据位置</h4>
-<h4 id="数据位置与赋值行为">数据位置与赋值行为</h4>
-<p>1.在存储storage和内存memory 之间两两赋值（或者从 调用数据calldata 赋值 ），都会创建一份独立的拷贝。<br>
-2.从内存memory到内存memory 的赋值只创建引用， 这意味着更改内存变量，其他引用相同数据的所有其他内存变量的值也会跟着改变。<br>
-3.从 存储storage 到本地存储变量的赋值也只分配一个引用。<br>
-4.其他的向 存储storage 的赋值，总是进行拷贝。 这种情况的示例如对状态变量或 存储storage 的结构体类型的局部变量成员的赋值，即使局部变量本身是一个引用，也会进行一份拷贝。</p>
-<h4 id="数组">数组</h4>
-<p>1.一个元素类型为 T，固定长度为 k 的数组可以声明为 T[k]，而动态数组声明为 T[]。<br>
-2.一个长度为 5，元素类型为 uint 的动态数组的数组（二维数组），应声明为 uint[][5]</p>
-<h4 id="创建内存数组">创建内存数组</h4>
-<p>1.不能 通过修改成员变量 .push 改变 内存 memory 数组的大小<br>
-2.定长的 内存memory 数组并不能赋值给变长的 内存memory 数组<br>
-3.</p>
-<pre><code class="language-pragma">
-contract TX {
-    function f(uint len) public pure {
-        uint[] memory a = new uint[](7);
-        bytes memory b = new bytes(len);
-
-        assert(a.length == 7);
-        assert(b.length == len);
-
-        a[6] = 8;
-    }
-}
-</code></pre>
-<h4 id="数组成员">数组成员</h4>
-<p>1.length<br>
-2.push() x.push().t = 2 或 x.push() = b<br>
-3.push(x) 固定 gas 费用<br>
-4.pop 根据现有的数组长度和移除的个数收取 gas 费用</p>
-<h4 id="数组切片">数组切片</h4>
-<p>1.数组切片是数组连续部分的视图，用法如：x[start:end] ， start 和 end 是 uint256 类型（或结果为 uint256 的表达式）。 x[start:end] 的第一个元素是 x[start] ， 最后一个元素是 x[end - 1] 。<br>
-2.目前数组切片，仅可使用于 calldata 数组.</p>
-<h4 id="结构体">结构体</h4>
-<p>1.和大多数编程语言一样，结构体类型可以作为元素用在映射和数组中，其自身也可以包含映射和数组作为成员变量。<br>
-2.在合约外部声明结构体可以使其被多个合约共享。</p>
-<h2 id="映射">映射</h2>
-<p>映射类型在声明时的形式为 mapping(_KeyType =&gt; _ValueType)。<br>
-使用：</p>
-<pre><code class="language-//">pragma solidity &gt;=0.4.0 &lt;0.9.0;
-
-contract MappingExample {
-    mapping(address =&gt; uint) public balances;
-
-    function update(uint newBalance) public {
-        balances[msg.sender] = newBalance;
-    }
-}
-
-contract MappingLBC {
-    function f() public returns (uint) {
-        MappingExample m = new MappingExample();
-        m.update(100);
-        return m.balances(this);
-    }
-}
-</code></pre>
-<h4 id="可迭代映射">可迭代映射</h4>
-<p>映射本身是无法遍历的，即无法枚举所有的键。不过，可以在它们之上实现一个数据结构来进行迭代。</p>
-<pre><code class="language-pragma">
-struct IndexValue { uint keyIndex; uint value; } //keyindex 表示key的索引
-struct KeyFlag { uint key; bool deleted; }  //key的实际值和删除状态
-
-struct itmap {
-    mapping(uint =&gt; IndexValue) data;
-    KeyFlag[] keys; //创建一个key的数组来储存KEY的状态
-    uint size;
-}
-</code></pre>
-<h4 id="涉及-lvalues-的运算符">涉及 LValues 的运算符</h4>
-<p>delete</p>
-<pre><code class="language-//">pragma solidity &gt;=0.4.0 &lt;0.9.0;
-
-contract DeleteLBC {
-    uint data;
-    uint[] dataArray;
-
-    function f() public {
-        uint x = data;
-        delete x; // 将 x 设为 0，并不影响数据
-        delete data; // 将 data 设为 0，并不影响 x，因为它仍然有个副本
-        uint[] storage y = dataArray;
-        delete dataArray;
-        // 将 dataArray.length 设为 0，但由于 uint[] 是一个复杂的对象，y 也将受到影响，
-        // 因为它是一个存储位置是 storage 的对象的别名。
-        // 另一方面：&quot;delete y&quot; 是非法的，引用了 storage 对象的局部变量只能由已有的 storage 对象赋值。
-        assert(y.length == 0);
-    }
-}
-</code></pre>
-<h4 id="基本类型之间的转换">基本类型之间的转换</h4>
-<p>隐式转换<br>
-uint8 可以转换成 uint16，int128 转换成 int256，但 int8 不能转换成 uint256<br>
-显式转换<br>
-如果某些情况下编译器不支持隐式转换，但是你很清楚你要做的结果，这种情况可以考虑显式转换。</p>
-<pre><code class="language-uint32">uint16 b = uint16(a); // 此时 b 的值是 0x5678
-</code></pre>
-<h2 id="字面常量与基本类型的转换">字面常量与基本类型的转换</h2>
-<h4 id="整型与字面常量转换">整型与字面常量转换</h4>
-<p>十进制和十六进制字面常量可以隐式转换为任何足以表示它而不会截断的整数类型</p>
-<pre><code class="language-uint8">uint32 b = 1234; // 可行
-uint16 c = 0x123456; // 失败, 会截断为 0x3456
-</code></pre>
-<h4 id="定长字节数组与字面常量转换">定长字节数组与字面常量转换</h4>
-<p>十进制字面常量不能隐式转换为定长字节数组。十六进制字面常量可以是，但仅当十六进制数字大小完全符合定长字节数组长度。 不过零值例外，零的十进制和十六进制字面常量都可以转换为任何定长字节数组类型:</p>
-<pre><code class="language-bytes2">bytes2 b = 0x12; // 不可行
-bytes2 c = 0x123; // 不可行
-bytes2 d = 0x1234; // 可行
-bytes2 e = 0x0012; // 可行
-bytes4 f = 0; // 可行
-bytes4 g = 0x0; // 可行
-</code></pre>
-<p>字符串字面常量和十六进制字符串字面常量可以隐式转换为定长字节数组，如果它们的字符数与字节类型的大小相匹配:</p>
-<pre><code class="language-bytes2">bytes2 b = &quot;xy&quot;; // 可行
-bytes2 c = hex&quot;12&quot;; // 不可行
-bytes2 d = hex&quot;123&quot;; // n不可行
-bytes2 e = &quot;x&quot;; // 不可行
-bytes2 f = &quot;xyz&quot;; // 不可行
-</code></pre>
-<h4 id="地址类型">地址类型</h4>
-<p>从 bytes20 或其他整型显示转换为 address 类型时，都会作为 address payable 类型。<br>
-一个地址 address a 可以通过payable(a)　转换为　 address payable 类型.</p>
 ]]></content>
     </entry>
 </feed>
