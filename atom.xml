@@ -2,13 +2,33 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://tangminjie.github.io</id>
     <title>Tangminjie Blog</title>
-    <updated>2022-05-05T07:22:46.807Z</updated>
+    <updated>2022-05-06T06:29:18.707Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://tangminjie.github.io"/>
     <link rel="self" href="https://tangminjie.github.io/atom.xml"/>
     <logo>https://tangminjie.github.io/images/avatar.png</logo>
     <icon>https://tangminjie.github.io/favicon.ico</icon>
     <rights>All rights reserved 2022, Tangminjie Blog</rights>
+    <entry>
+        <title type="html"><![CDATA[学习资料]]></title>
+        <id>https://tangminjie.github.io/post/xue-xi-zi-liao/</id>
+        <link href="https://tangminjie.github.io/post/xue-xi-zi-liao/">
+        </link>
+        <updated>2022-05-06T06:25:10.000Z</updated>
+        <content type="html"><![CDATA[<p><strong>solidity实例</strong><br>
+https://solidity-by-example.org/</p>
+<p><strong>learnWeb3官网</strong><br>
+https://www.learnweb3.io/</p>
+<p><strong>Dapp-learning-dao</strong><br>
+学习组织很全面的学习资料以及项目路径<br>
+https://github.com/Dapp-Learning-DAO</p>
+<p><strong>登链社区</strong><br>
+中文社区，比较全面的中文文档<br>
+https://learnblockchain.cn</p>
+<p><strong>登链集训营资料</strong><br>
+https://learnblockchain.cn/video/play/300</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[AMM原理，滑点，和无偿损失]]></title>
         <id>https://tangminjie.github.io/post/amm-yuan-li-hua-dian-he-wu-chang-sun-shi/</id>
@@ -2171,103 +2191,6 @@ revert会撤回所有的状态转变。但是它有两点不同：</p>
 <li>它允许你返回一个值；</li>
 <li>它会把所有剩下的gas退回给caller</li>
 </ol>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[单位和全局变量]]></title>
-        <id>https://tangminjie.github.io/post/dan-wei-he-quan-ju-bian-liang/</id>
-        <link href="https://tangminjie.github.io/post/dan-wei-he-quan-ju-bian-liang/">
-        </link>
-        <updated>2022-04-18T09:00:19.000Z</updated>
-        <content type="html"><![CDATA[<h2 id="以太币ether-单位">以太币Ether 单位</h2>
-<pre><code class="language-assert(1">assert(1 gwei == 1e9);
-assert(1 ether == 1e18);
-</code></pre>
-<h2 id="时间单位">时间单位</h2>
-<p>秒是缺省时间单位，在时间单位之间，数字后面带有 seconds、 minutes、 hours、 days 和 weeks 的可以进行换算，基本换算关系如下：</p>
-<pre><code class="language-1">1 minutes == 60 seconds
-1 hours == 60 minutes
-1 days == 24 hours
-1 weeks == 7 days
-</code></pre>
-<p>注意：years 已经在 0.5.0 版本去除了，因为闰年的原因。</p>
-<pre><code class="language-function">    if (block.timestamp &gt;= start + daysAfter * 1 days) {
-        // ...
-    }
-}
-</code></pre>
-<h2 id="特殊变量和函数">特殊变量和函数</h2>
-<p>在全局命名空间中已经存在了（预设了）一些特殊的变量和函数，他们主要用来提供关于区块链的信息或一些通用的工具函数。<br>
-<strong>区块和交易属性</strong></p>
-<pre><code class="language-blockhash(uint">block.chainid (uint): 当前链 id
-block.coinbase ( address ): 挖出当前区块的矿工地址
-block.difficulty ( uint ): 当前区块难度
-block.gaslimit ( uint ): 当前区块 gas 限额
-block.number ( uint ): 当前区块号
-block.timestamp ( uint): 自 unix epoch 起始当前区块以秒计的时间戳
-gasleft() returns (uint256) ：剩余的 gas
-msg.data ( bytes ): 完整的 calldata
-msg.sender ( address ): 消息发送者（当前调用）
-msg.sig ( bytes4 ): calldata 的前 4 字节（也就是函数标识符）
-msg.value ( uint ): 随消息发送的 wei 的数量
-tx.gasprice (uint): 交易的 gas 价格
-tx.origin (address payable): 交易发起者（完全的调用链）
-</code></pre>
-<h2 id="abi-编码及解码函数">ABI 编码及解码函数</h2>
-<pre><code class="language-abi.decode(bytes">abi.encode(...) returns (bytes)： ABI - 对给定参数进行编码
-abi.encodePacked(...) returns (bytes)：对给定参数执行 紧打包编码 ，注意，可以不明确打包编码。
-abi.encodeWithSelector(bytes4 selector, ...) returns (bytes)： ABI - 对给定第二个开始的参数进行编码，并以给定的函数选择器作为起始的 4 字节数据一起返回
-abi.encodeWithSignature(string signature, ...) returns (bytes)：等价于 abi.encodeWithSelector(bytes4(keccak256(signature), ...)
-</code></pre>
-<h2 id="错误处理">错误处理</h2>
-<p>assert(bool condition) 如果不满足条件，则会导致 Panic 错误，则撤销状态更改 - 用于检查内部错误。<br>
-require(bool condition) 如果条件不满足则撤销状态更改 - 用于检查由输入或者外部组件引起的错误。<br>
-require(bool condition, string memory message) 如果条件不满足则撤销状态更改 - 用于检查由输入或者外部组件引起的错误，可以同时提供一个错误消息。<br>
-revert() 终止运行并撤销状态更改。<br>
-revert(string memory reason) 终止运行并撤销状态更改，可以同时提供一个解释性的字符串。<br>
-注意：assert 不返回gas费用，require返回gas费用。revert()会回滚所有状态，并且返回剩余gas</p>
-<h2 id="数学和密码学函数">数学和密码学函数</h2>
-<p>1.addmod(uint x, uint y, uint k) returns (uint)<br>
-计算 (x + y) % k，加法会在任意精度下执行，并且加法的结果即使超过 2<strong>256 也不会被截取。从 0.5.0 版本的编译器开始会加入对 k != 0 的校验（assert）。<br>
-2.mulmod(uint x, uint y, uint k) returns (uint)<br>
-计算 (x * y) % k，乘法会在任意精度下执行，并且乘法的结果即使超过 2</strong>256 也不会被截取。从 0.5.0 版本的编译器开始会加入对 k != 0 的校验（assert）。<br>
-3.keccak256((bytes memory) returns (bytes32)<br>
-计算 Keccak-256 哈希。<br>
-4.sha256(bytes memory) returns (bytes32)<br>
-计算参数的 SHA-256 哈希。<br>
-5.ripemd160(bytes memory) returns (bytes20)<br>
-计算参数的 RIPEMD-160 哈希。<br>
-6.ecrecover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) returns (address)<br>
-利用椭圆曲线签名恢复与公钥相关的地址，错误返回零值。ecrecover 返回一个 address, 而不是 address payable 。他们之前的转换参考 address payable ，如果需要转移资金到恢复的地址。</p>
-<h2 id="地址成员">地址成员</h2>
-<pre><code class="language-&lt;address&gt;.balance">以 Wei 为单位的 地址类型 Address 的余额。
-&lt;address&gt;.code (bytes memory)
-在 地址类型 Address 上的代码(可以为空)
-&lt;address&gt;.codehash (bytes32)
-:ref:`address`的codehash
-&lt;address payable&gt;.transfer(uint256 amount)
-向 地址类型 Address 发送数量为 amount 的 Wei，失败时抛出异常，使用固定（不可调节）的 2300 gas 的矿工费。
-&lt;address payable&gt;.send(uint256 amount) returns (bool)
-向 地址类型 Address 发送数量为 amount 的 Wei，失败时返回 false，发送 2300 gas 的矿工费用，不可调节。
-&lt;address&gt;.call(bytes memory) returns (bool, bytes memory)
-用给定的有效载荷（payload）发出低级 CALL 调用，返回成功状态及返回数据，发送所有可用 gas，也可以调节 gas。
-&lt;address&gt;.delegatecall(bytes memory) returns (bool, bytes memory)
-用给定的有效载荷 发出低级 DELEGATECALL 调用 ，返回成功状态并返回数据，发送所有可用 gas，也可以调节 gas。 发出低级函数 DELEGATECALL，失败时返回 false，发送所有可用 gas，可调节。
-&lt;address&gt;.staticcall(bytes memory) returns (bool, bytes memory)
-用给定的有效载荷 发出低级 STATICCALL 调用 ，返回成功状态并返回数据，发送所有可用 gas，也可以调节 gas。
-</code></pre>
-<h2 id="合约相关">合约相关</h2>
-<p>1.this (当前的合约类型) 当前合约，可以显示转换为 地址类型 Address。<br>
-2.selfdestruct(address payable recipient) 销毁合约，并把余额发送到指定 地址类型 Address</p>
-<h2 id="类型信息">类型信息</h2>
-<p>表达式 type(X) 可用于检索参数 X 的类型信息。 目前，此功能还比较有限( X 仅能是合约和整型)，但是未来应该会扩展。</p>
-<p>用于合约类型 C 支持以下属性:</p>
-<pre><code class="language-type(C).name">type(C).creationCode        //获得包含创建合约字节码的内存字节数组
-type(C).runtimeCode         //获得合约运行时字节码的内存字节数组
-type(I).interfaceId             //返回接口``I`` 的 bytes4 类型的接口 ID
-type(T).min                        //返回整型T的最小值
-type(T).max                        //返回整型T的最大值
-</code></pre>
 ]]></content>
     </entry>
 </feed>
