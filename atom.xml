@@ -2,13 +2,103 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://tangminjie.github.io</id>
     <title>Tangminjie Blog</title>
-    <updated>2022-05-10T08:35:26.897Z</updated>
+    <updated>2022-05-10T10:45:15.130Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://tangminjie.github.io"/>
     <link rel="self" href="https://tangminjie.github.io/atom.xml"/>
     <logo>https://tangminjie.github.io/images/avatar.png</logo>
     <icon>https://tangminjie.github.io/favicon.ico</icon>
     <rights>All rights reserved 2022, Tangminjie Blog</rights>
+    <entry>
+        <title type="html"><![CDATA[多签钱包]]></title>
+        <id>https://tangminjie.github.io/post/duo-qian-qian-bao/</id>
+        <link href="https://tangminjie.github.io/post/duo-qian-qian-bao/">
+        </link>
+        <updated>2022-05-10T09:33:35.000Z</updated>
+        <content type="html"><![CDATA[<p>多签钱包最大的特点是需由多个私钥持有者的授权才能进行钱包交易。通常情况下，多签钱包在创建时便需确认好“m-n模式”，即创建总计n个私钥，并通过这n个私钥计算生成一个钱包地址，只有这n个私钥中的m个持有者共同签名授权才能完成对该钱包地址所对应的加密货币的相关操作。2-3是多签钱包中最常见的运作模式，即每次交易都需全部3个私钥中的2个进行签名授权才能完成，能够较好地平衡安全性与便捷性之间的关系。<br>
+<strong>多签钱包得优势：</strong><br>
+在单签钱包中，决定加密货币所有权和管理权的私钥仅掌握在单人手中，一旦私钥丢失或持有者遗忘钱包助记词，那就意味着持有者失去了对该钱包地址的控制权，与其相关联的加密资产将完全丢失。<br>
+而多签钱包的存在，最大程度降低了单个私钥丢失时的资产损失风险。以2-3模式为例，在全部3个私钥中，只要有2个私钥完成了签名授权操作就能进行相关加密货币的交易。即使有1个私钥丢失，还能通过剩下的2个私钥完成对资产的转移，避免资产损失。<br>
+多签钱包的地址是由多个私钥通过计算生成的，这一机制相比单签钱包要复杂得多。因此，对比单签钱包，黑客要想攻击钱包地址并盗取钱包内的加密货币资产，就得破解多个私钥，这一难度是成倍增长的。多签的机制保障了钱包本身在面对外部攻击时的安全性。</p>
+<h1 id="ownbit-和-gnosis">Ownbit 和 Gnosis</h1>
+<p>Ownbit 和 Gnosis 是市场上用户量相对最多得两个多签钱包。<br>
+Ownbit 和 Gnosis 均通过合约账户实现以太坊多签，但是其实现的逻辑却迥然不同。分别代表了当前两种主流的实现方式，我们通过合约源码来讲解实现原理和各自的优缺点。</p>
+<h2 id="gnosis-实现多签逻辑">Gnosis 实现多签逻辑</h2>
+<p>Gnosis 实现多签逻辑的过程如下：<br>
+1.任意一方通过 submitTransaction 方法提交交易，得到一个交易号（transactionId，该交易号并非我们常见的交易哈希，而是一个自增长的 uint256）：</p>
+<pre><code class="language-function">        public
+        returns (uint transactionId)
+    {
+        transactionId = addTransaction(destination, value, data);
+        confirmTransaction(transactionId);
+    }
+</code></pre>
+<p>2.其他参与方提交 ETH 交易，调用合约的 confirmTransaction 方法，来表示他们对某个交易执行的认可：</p>
+<pre><code class="language-function">        public
+        ownerExists(msg.sender)
+        transactionExists(transactionId)
+        notConfirmed(transactionId, msg.sender)
+{
+        confirmations[transactionId][msg.sender] = true;
+        Confirmation(msg.sender, transactionId);
+        executeTransaction(transactionId);
+    }
+</code></pre>
+<p>3.当 confirm 的人数达到最低（_required）要求，executeTransaction 的内部逻辑将被触发，从而执行第一步用户所提交的逻辑（value 和 data）：</p>
+<pre><code class="language-function">        public
+        notExecuted(transactionId)
+    {
+        if (isConfirmed(transactionId)) {
+            Transaction tx = transactions[transactionId];
+            tx.executed = true;
+            if (tx.destination.call.value(tx.value)(tx.data))
+                Execution(transactionId);
+            else {
+                ExecutionFailure(transactionId);
+                tx.executed = false;
+            }
+        }
+    }
+</code></pre>
+<h2 id="ownbit-实现多签逻辑">Ownbit 实现多签逻辑</h2>
+<p>Ownbit 实现多签的逻辑和 Gnosis 不同。可以认为 Gnosis 的实现逻辑为线上方式，而 Ownbit 的实现逻辑为线下方式。<br>
+1.相关参与方（满足 _required 个数）线下对即将执行的交易进行签名（所谓线下，即这个过程不需要向以太坊发送交易），生成签名结果（r、v、s）：</p>
+<pre><code class="language-function">    //the sequence should match generateMultiSigV2 in JS
+    bytes32 message = keccak256(abi.encodePacked(address(this), erc20Contract, destination, value, spendNonce));
+    return message;
+  }
+</code></pre>
+<p>参与签名的参数有：多签合约地址、Erc20代币合约地址（对于转移 ether 使用 0x0）、转移的目标地址、金额、控制重放的合约内部 spendNonce。<br>
+对以上参数签名，表示参与方同意对指定合约转移指定金额。<br>
+2.任意一方（甚至可以是多签参与方以外的其他人）发送 ETH 交易，调用合约的 spend 或 spendERC20 方法，并将以上签名结果作为参数传入：</p>
+<pre><code class="language-function">    require(destination != address(this), &quot;Not allow sending to yourself&quot;);
+    //transfer erc20 token
+    //uint256 tokenValue = Erc20(erc20contract).balanceOf(address(this));
+    require(value &gt; 0, &quot;Erc20 spend value invalid&quot;);
+    require(_validSignature(erc20contract, destination, value, vs, rs, ss), &quot;invalid signatures&quot;);
+    spendNonce = spendNonce + 1;
+    // transfer tokens from this contract to the destination address
+    Erc20(erc20contract).transfer(destination, value);
+    emit SpentERC20(erc20contract, destination, value);
+  }
+</code></pre>
+<p>_validSignature 将对签名的有效性进行验证。验证通过的情况下，相关转币逻辑即被执行。<br>
+以上便完成了 Ownbit 多签合约的调用。Ownbit 将不同目的分解到不同的方法中，例如：spend 进行 ether 转移，spendERC20 进行 Erc20 代币转移，spendAny 进行任意功能的调用。</p>
+<h2 id="两种方式的优缺点">两种方式的优缺点</h2>
+<p>以上两种实现 ETH 多签的不同方式，具有很好的代表性。这也是目前实现 ETH 多签最常用的两种手段。<br>
+<strong>Gnosis 方式的优点：</strong><br>
+1.采用发送交易来表示参与方同意某个花费或调用，避免了复杂的签名计算；<br>
+2.全程线上，具有更好的审计性（参与方的 Reject 的态度也保留在区块链上）；<br>
+<strong>Gnosis 方式的主要缺点：</strong><br>
+1.每个参与方都需向线上发送交易，多次花费手续费，不经济；<br>
+2.每个参与方所花费的手续费不均等，使 confirm 人数刚好等于 _required 的交易将花费更大的手续费以执行 executeTransaction 内部逻辑；<br>
+3.交易逻辑隐藏在 data 里，可欺骗性大；<br>
+<strong>Gnosis 方法的优点正是 Ownbit 方法的缺点，Gnosis 方法的缺点也是 Ownbit 方法的优点。总体而言，Ownbit 的方法因为其经济性，使用得更多。</strong></p>
+<h1 id="基于solidity0813实现gnosis合约逻辑">基于solidity0.8.13实现Gnosis合约逻辑</h1>
+<p>github:<br>
+https://github.com/tangminjie/learnblockchain/tree/main/Multi-Sig-Wallet</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[学习资料]]></title>
         <id>https://tangminjie.github.io/post/xue-xi-zi-liao/</id>
@@ -2005,192 +2095,6 @@ contract C {
     }
 }
 </code></pre>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[表达式和控制结构]]></title>
-        <id>https://tangminjie.github.io/post/biao-da-shi-he-kong-zhi-jie-gou/</id>
-        <link href="https://tangminjie.github.io/post/biao-da-shi-he-kong-zhi-jie-gou/">
-        </link>
-        <updated>2022-04-18T09:47:00.000Z</updated>
-        <content type="html"><![CDATA[<h2 id="控制结构">控制结构</h2>
-<p>JavaScript 中的大部分控制结构在 Solidity 中都是可用的，除了 switch 和 goto。 因此 Solidity 中有 if，else，while，do，for，break，continue，return，? : 这些与在 C 或者 JavaScript 中表达相同语义的关键词。<br>
-Solidity还支持 try/catch 语句形式的异常处理， 但仅用于 外部函数调用　和　合约创建调用．<br>
-注意：与 C 和 JavaScript 不同， Solidity 中非布尔类型数值不能转换为布尔类型，因此 if (1) { ... } 的写法在 Solidity 中 无效 。</p>
-<h2 id="函数调用">函数调用</h2>
-<p>当前合约中的函数可以直接（“从内部”）调用，这些函数调用在 EVM 中被解释为简单的跳转。</p>
-<h2 id="外部函数调用">外部函数调用</h2>
-<p>表达式 this.g(8); 和 c.g(2); （其中 c 是合约实例）也是有效的函数调用，但是这种情况下，函数将会通过一个消息调用来进行“外部调用”，而不是直接的跳转。 请注意，不可以在构造函数中通过 this 来调用函数，因为此时真实的合约实例还没有被创建。<br>
-当调用其他合约的函数时，随函数调用发送的 Wei 和 gas 的数量可以分别由特定选项　{value: 10, gas: 10000}<br>
-请注意，不建议明确指定gas，因为操作码的gas 消耗将来可能会发生变化。 任何发送给合约 Wei 将被添加到该合约的总余额中：</p>
-<pre><code class="language-pragma">
-contract InfoFeed {
-    function info() public payable returns (uint ret) { return 42; }
-}
-
-contract Consumer {
-    InfoFeed feed;
-    function setFeed(InfoFeed addr) public { feed = addr; }
-    function callFeed() public { feed.info{value: 10, gas: 800}(); }
-}
-//payable 修饰符要用于修饰 info 函数，否则，value 选项将不可用。
-</code></pre>
-<h2 id="具名调用和匿名函数参数">具名调用和匿名函数参数</h2>
-<p>函数调用参数也可以按照任意顺序由名称给出，如果它们被包含在 { } 中， 如以下示例中所示。参数列表必须按名称与函数声明中的参数列表相符，但可以按任意顺序排列。</p>
-<pre><code class="language-pragma">
-contract C {
-    mapping(uint =&gt; uint) data;
-
-    function f() public {
-        set({value: 2, key: 3});
-    }
-
-    function set(uint key, uint value) public {
-        data[key] = value;
-    }
-
-}
-</code></pre>
-<h2 id="省略函数参数名称">省略函数参数名称</h2>
-<p>未使用参数的名称（特别是返回参数）可以省略。这些参数仍然存在于堆栈中，但它们无法访问</p>
-<pre><code class="language-pragma">
-contract C {
-    // 省略参数名称
-    function func(uint k, uint) public pure returns(uint) {
-        return k;
-    }
-}
-</code></pre>
-<h2 id="通过-new-创建合约">通过 new 创建合约</h2>
-<p>使用关键字 new 可以创建一个新合约。待创建合约的完整代码必须事先知道，因此递归的创建依赖是不可能的。</p>
-<pre><code class="language-pragma">
-contract D {
-    uint x;
-    function D(uint a) payable {
-        x = a;
-    }
-}
-
-contract C {
-    D d = new D(4); // 将作为合约 C 构造函数的一部分执行
-
-    function createD(uint arg) public {
-        D newD = new D(arg);
-    }
-
-    function createAndEndowD(uint arg, uint amount) public payable {
-                //随合约的创建发送 ether
-        D newD = (new D){value:amount}(arg);  
-    }
-}
-//通过使用 value 选项创建 D 的实例时可以附带发送 Ether，但是不能限制 gas 的数量。 如果创建失败（可能因为栈溢出，或没有足够的余额或其他问题），会引发异常。
-</code></pre>
-<h2 id="加盐的合约创建-create2">加“盐”的合约创建 create2</h2>
-<p>在创建合约时，将根据创建合约的地址和每次创建合约交易时的计数器(nonce)来计算合约的地址。<br>
-如果你指定了一个可选的 <code>salt</code>（一个bytes32值），那么合约创建将使用另一种机制来生成新合约的地址：<br>
-它将根据给定的盐值，创建合约的字节码和构造函数参数来计算创建合约的地址。地址计算公式如下：</p>
-<pre><code class="language-keccak256">address— 调用CREATE2的智能合约的地址
-salt— 随机数,其实是确定的比如用userId计算出的哈希
-init_code— 要部署合约的字节码
-</code></pre>
-<p>特别注意，不使用计数器（“nonce”）。 这样可以在创建合约时提供更大的灵活性：你可以在创建新合约之前就推导出（将要创建的）合约地址。甚至是，还可以依赖此地址（即便它还不存在）来创建其他合约。一个主要用例场景是充当链下交互仲裁合约，仅在有争议时才需要创建。</p>
-<pre><code class="language-//">pragma solidity ^0.7.0;
-
-contract D {
-   uint public x;
-   constructor(uint a) {
-       x = a;
-   }
-}
-
-contract C {
-   function createDSalted(bytes32 salt, uint arg) public {
-       /// 这个复杂的表达式只是告诉我们，如何预先计算地址。
-       /// 这里仅仅用来说明。
-       /// 实际上，你仅仅需要 ``new D{salt: salt}(arg)``.
-       address predictedAddress = address(uint160(uint(keccak256(abi.encodePacked(
-           bytes1(0xff),
-           address(this),
-           salt,
-           keccak256(abi.encodePacked(
-               type(D).creationCode,
-               arg
-           ))
-       )))));
-
-       D d = new D{salt: salt}(arg);
-       require(address(d) == predictedAddress);
-   }
-}
-</code></pre>
-<h2 id="表达式计算顺序">表达式计算顺序</h2>
-<h2 id="赋值">赋值</h2>
-<h4 id="解构赋值和返回多值">解构赋值和返回多值</h4>
-<pre><code class="language-ragma">
-contract C {
-    uint index;
-
-    function f() public pure returns (uint, bool, uint) {
-        return (7, true, 2);
-    }
-
-    function g() public {
-        //基于返回的元组来声明变量并赋值
-        (uint x, bool b, uint y) = f();
-        //交换两个值的通用窍门——但不适用于非值类型的存储 (storage) 变量。
-        (x, y) = (y, x);
-        //元组的末尾元素可以省略（这也适用于变量声明）。
-        (index,,) = f(); // 设置 index 为 7
-    }
-}
-</code></pre>
-<h4 id="数组和结构体的复杂性">数组和结构体的复杂性</h4>
-<p>在下面的示例中, 对 g(x) 的调用对 x 没有影响, 因为它在内存中创建了存储值独立副本。但是, h(x) 成功修改 x , 因为只传递引用而不传递副本。</p>
-<pre><code class="language-//">pragma solidity &gt;=0.4.22 &lt;0.9.0;
-
- contract C {
-    uint[20] x;
-
-     function f() public {
-        g(x);
-        h(x);
-    }
-
-     function g(uint[20] memory y) internal pure {
-        y[2] = 3;
-    }
-
-     function h(uint[20] storage y) internal {
-        y[3] = 4;
-    }
-}
-</code></pre>
-<h2 id="作用域和声明">作用域和声明</h2>
-<p>Solidity 中的作用域规则遵循了 C99（与其他很多语言一样）：变量将会从它们被声明之后可见，直到一对 { } 块的结束。作为一个例外，在 for 循环语句中初始化的变量，其可见性仅维持到 for 循环的结束。</p>
-<h2 id="算术运算的检查模式与非检查模式">算术运算的检查模式与非检查模式</h2>
-<p>当对无限制整数执行算术运算，其结果超出结果类型的范围，这是就发生了上溢出或下溢出。<br>
-在Solidity 0.8.0之前，算术运算总是会在发生溢出的情况下进行“截断”，从而得靠引入额外检查库来解决这个问题（如 OpenZepplin 的 SafeMath）。<br>
-而从Solidity 0.8.0开始，所有的算术运算默认就会进行溢出检查，额外引入库将不再必要。<br>
-如果想要之前“截断”的效果，可以使用 unchecked 代码块：</p>
-<pre><code class="language-//">pragma solidity &gt;0.7.99;
-contract C {
-    function f(uint a, uint b) pure public returns (uint) {
-        // 溢出会返回“截断”的结果
-        unchecked { return a - b; }
-    }
-    function g(uint a, uint b) pure public returns (uint) {
-        // 溢出会抛出异常
-        return a - b;
-    }
-}
-</code></pre>
-<h2 id="错误处理及异常assert-require-revert">错误处理及异常：Assert, Require, Revert</h2>
-<p>同样作为判断一个条件是否满足的函数，require会退回剩下的gas，而assert会烧掉所有的gas。require 常用来执行条件判断，作为函数执行的一个合理的判断。assert常用来中断函数，抛出异常。一般来说正常运行的函数不会运行到assert。<br>
-revert会撤回所有的状态转变。但是它有两点不同：</p>
-<ol>
-<li>它允许你返回一个值；</li>
-<li>它会把所有剩下的gas退回给caller</li>
-</ol>
 ]]></content>
     </entry>
 </feed>

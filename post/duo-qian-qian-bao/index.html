@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>多签钱包 | Tangminjie Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://tangminjie.github.io/favicon.ico?v=1652179511363">
+<link rel="stylesheet" href="https://tangminjie.github.io/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="多签钱包最大的特点是需由多个私钥持有者的授权才能进行钱包交易。通常情况下，多签钱包在创建时便需确认好“m-n模式”，即创建总计n个私钥，并通过这n个私钥计算生成一个钱包地址，只有这n个私钥中的m个持有者共同签名授权才能完成对该钱包地址所对应..." />
+    <meta name="keywords" content="solidity" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://tangminjie.github.io">
+        <img src="https://tangminjie.github.io/images/avatar.png?v=1652179511363" class="site-logo">
+        <h1 class="site-title">Tangminjie Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/nEjwCuZ71/" class="site-nav">
+            solidity
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/RGPrDS_1V/" class="site-nav">
+            TypeScript
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/TCMNyywPJ" class="site-nav">
+            ERC协议
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/DbwJLkrIK/" class="site-nav">
+            学习资料
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/p44-1Shu9" class="site-nav">
+            DEFI
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://tangminjie.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">多签钱包</h2>
+            <div class="post-date">2022-05-10</div>
+            
+            <div class="post-content" v-pre>
+              <p>多签钱包最大的特点是需由多个私钥持有者的授权才能进行钱包交易。通常情况下，多签钱包在创建时便需确认好“m-n模式”，即创建总计n个私钥，并通过这n个私钥计算生成一个钱包地址，只有这n个私钥中的m个持有者共同签名授权才能完成对该钱包地址所对应的加密货币的相关操作。2-3是多签钱包中最常见的运作模式，即每次交易都需全部3个私钥中的2个进行签名授权才能完成，能够较好地平衡安全性与便捷性之间的关系。<br>
+<strong>多签钱包得优势：</strong><br>
+在单签钱包中，决定加密货币所有权和管理权的私钥仅掌握在单人手中，一旦私钥丢失或持有者遗忘钱包助记词，那就意味着持有者失去了对该钱包地址的控制权，与其相关联的加密资产将完全丢失。<br>
+而多签钱包的存在，最大程度降低了单个私钥丢失时的资产损失风险。以2-3模式为例，在全部3个私钥中，只要有2个私钥完成了签名授权操作就能进行相关加密货币的交易。即使有1个私钥丢失，还能通过剩下的2个私钥完成对资产的转移，避免资产损失。<br>
+多签钱包的地址是由多个私钥通过计算生成的，这一机制相比单签钱包要复杂得多。因此，对比单签钱包，黑客要想攻击钱包地址并盗取钱包内的加密货币资产，就得破解多个私钥，这一难度是成倍增长的。多签的机制保障了钱包本身在面对外部攻击时的安全性。</p>
+<h1 id="ownbit-和-gnosis">Ownbit 和 Gnosis</h1>
+<p>Ownbit 和 Gnosis 是市场上用户量相对最多得两个多签钱包。<br>
+Ownbit 和 Gnosis 均通过合约账户实现以太坊多签，但是其实现的逻辑却迥然不同。分别代表了当前两种主流的实现方式，我们通过合约源码来讲解实现原理和各自的优缺点。</p>
+<h2 id="gnosis-实现多签逻辑">Gnosis 实现多签逻辑</h2>
+<p>Gnosis 实现多签逻辑的过程如下：<br>
+1.任意一方通过 submitTransaction 方法提交交易，得到一个交易号（transactionId，该交易号并非我们常见的交易哈希，而是一个自增长的 uint256）：</p>
+<pre><code class="language-function">        public
+        returns (uint transactionId)
+    {
+        transactionId = addTransaction(destination, value, data);
+        confirmTransaction(transactionId);
+    }
+</code></pre>
+<p>2.其他参与方提交 ETH 交易，调用合约的 confirmTransaction 方法，来表示他们对某个交易执行的认可：</p>
+<pre><code class="language-function">        public
+        ownerExists(msg.sender)
+        transactionExists(transactionId)
+        notConfirmed(transactionId, msg.sender)
+{
+        confirmations[transactionId][msg.sender] = true;
+        Confirmation(msg.sender, transactionId);
+        executeTransaction(transactionId);
+    }
+</code></pre>
+<p>3.当 confirm 的人数达到最低（_required）要求，executeTransaction 的内部逻辑将被触发，从而执行第一步用户所提交的逻辑（value 和 data）：</p>
+<pre><code class="language-function">        public
+        notExecuted(transactionId)
+    {
+        if (isConfirmed(transactionId)) {
+            Transaction tx = transactions[transactionId];
+            tx.executed = true;
+            if (tx.destination.call.value(tx.value)(tx.data))
+                Execution(transactionId);
+            else {
+                ExecutionFailure(transactionId);
+                tx.executed = false;
+            }
+        }
+    }
+</code></pre>
+<h2 id="ownbit-实现多签逻辑">Ownbit 实现多签逻辑</h2>
+<p>Ownbit 实现多签的逻辑和 Gnosis 不同。可以认为 Gnosis 的实现逻辑为线上方式，而 Ownbit 的实现逻辑为线下方式。<br>
+1.相关参与方（满足 _required 个数）线下对即将执行的交易进行签名（所谓线下，即这个过程不需要向以太坊发送交易），生成签名结果（r、v、s）：</p>
+<pre><code class="language-function">    //the sequence should match generateMultiSigV2 in JS
+    bytes32 message = keccak256(abi.encodePacked(address(this), erc20Contract, destination, value, spendNonce));
+    return message;
+  }
+</code></pre>
+<p>参与签名的参数有：多签合约地址、Erc20代币合约地址（对于转移 ether 使用 0x0）、转移的目标地址、金额、控制重放的合约内部 spendNonce。<br>
+对以上参数签名，表示参与方同意对指定合约转移指定金额。<br>
+2.任意一方（甚至可以是多签参与方以外的其他人）发送 ETH 交易，调用合约的 spend 或 spendERC20 方法，并将以上签名结果作为参数传入：</p>
+<pre><code class="language-function">    require(destination != address(this), &quot;Not allow sending to yourself&quot;);
+    //transfer erc20 token
+    //uint256 tokenValue = Erc20(erc20contract).balanceOf(address(this));
+    require(value &gt; 0, &quot;Erc20 spend value invalid&quot;);
+    require(_validSignature(erc20contract, destination, value, vs, rs, ss), &quot;invalid signatures&quot;);
+    spendNonce = spendNonce + 1;
+    // transfer tokens from this contract to the destination address
+    Erc20(erc20contract).transfer(destination, value);
+    emit SpentERC20(erc20contract, destination, value);
+  }
+</code></pre>
+<p>_validSignature 将对签名的有效性进行验证。验证通过的情况下，相关转币逻辑即被执行。<br>
+以上便完成了 Ownbit 多签合约的调用。Ownbit 将不同目的分解到不同的方法中，例如：spend 进行 ether 转移，spendERC20 进行 Erc20 代币转移，spendAny 进行任意功能的调用。</p>
+<h2 id="两种方式的优缺点">两种方式的优缺点</h2>
+<p>以上两种实现 ETH 多签的不同方式，具有很好的代表性。这也是目前实现 ETH 多签最常用的两种手段。<br>
+<strong>Gnosis 方式的优点：</strong><br>
+1.采用发送交易来表示参与方同意某个花费或调用，避免了复杂的签名计算；<br>
+2.全程线上，具有更好的审计性（参与方的 Reject 的态度也保留在区块链上）；<br>
+<strong>Gnosis 方式的主要缺点：</strong><br>
+1.每个参与方都需向线上发送交易，多次花费手续费，不经济；<br>
+2.每个参与方所花费的手续费不均等，使 confirm 人数刚好等于 _required 的交易将花费更大的手续费以执行 executeTransaction 内部逻辑；<br>
+3.交易逻辑隐藏在 data 里，可欺骗性大；<br>
+<strong>Gnosis 方法的优点正是 Ownbit 方法的缺点，Gnosis 方法的缺点也是 Ownbit 方法的优点。总体而言，Ownbit 的方法因为其经济性，使用得更多。</strong></p>
+<h1 id="基于solidity0813实现gnosis合约逻辑">基于solidity0.8.13实现Gnosis合约逻辑</h1>
+<p>github:<br>
+https://github.com/tangminjie/learnblockchain/tree/main/Multi-Sig-Wallet</p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://tangminjie.github.io/tag/nEjwCuZ71/" class="tag">
+                    solidity
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://tangminjie.github.io/post/xue-xi-zi-liao/">
+                  <h3 class="post-title">
+                    学习资料
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
