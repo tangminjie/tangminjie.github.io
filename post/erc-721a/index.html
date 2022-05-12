@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>ERC-721A | Tangminjie Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://tangminjie.github.io/favicon.ico?v=1652351941480">
+<link rel="stylesheet" href="https://tangminjie.github.io/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="ERC-721A 是由 Azuki 研发的 ERC-721 实现。ERC-721A，已经运用到了他們发行的 Azuki NFT Collection 中。根据他们的文档介绍，铸造一个NFT 所消耗的 gas fee，相比 OZ ERC721..." />
+    <meta name="keywords" content="ERC协议" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://tangminjie.github.io">
+        <img src="https://tangminjie.github.io/images/avatar.png?v=1652351941480" class="site-logo">
+        <h1 class="site-title">Tangminjie Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/nEjwCuZ71/" class="site-nav">
+            solidity
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/RGPrDS_1V/" class="site-nav">
+            TypeScript
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/TCMNyywPJ" class="site-nav">
+            ERC协议
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/DbwJLkrIK/" class="site-nav">
+            学习资料
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/p44-1Shu9" class="site-nav">
+            DEFI
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://tangminjie.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">ERC-721A</h2>
+            <div class="post-date">2022-05-12</div>
+            
+            <div class="post-content" v-pre>
+              <p>ERC-721A 是由 Azuki 研发的 ERC-721 实现。ERC-721A，已经运用到了他們发行的 Azuki NFT Collection 中。根据他们的文档介绍，铸造一个NFT 所消耗的 gas fee，相比 OZ ERC721，节省了一倍多，如果是一次mint 5 个，节省的 gas 甚至达到 7 倍。<br>
+<img src="https://s2.loli.net/2022/05/12/5lXz4cfLMqEn1Cb.png" alt="gas费用对比" loading="lazy"></p>
+<h1 id="erc-721a优化">ERC-721A优化</h1>
+<p><strong>优化 1 - 从 OpenZeppelin (OZ) ERC721Enumerable 中删除重复存储</strong><br>
+IERC721Enumerable 的广泛使用的 OZ 实现包括每个令牌元数据的冗余存储。这种非规范化的方法以编写函数的巨大成本优化读取函数，考虑到用户不太可能为读取函数付费，这并不理想。此外，我们的令牌从 0 开始编号，这一事实让我们从基本实现中删除了一些冗余存储。我们强烈建议所有新发布的产品在寻找大赢家时仔细检查此文件。<br>
+ERC721Enumerable接口提供了读取NFT发现量，持有者，TokenID等情况，由智能合约来实现：</p>
+<pre><code class="language-totalSupply():">tokenByIndex(): //返回指定位置NFT的TokenID
+tokenOfOwnerByIndex(): //返回指定地址的所有TokenID
+</code></pre>
+<p>首先 ERC721a 对 ERC721Enumerable 中的实现做了优化，去除了一些不必要的存储。<br>
+OZ ERC721Enumerable:</p>
+<pre><code class="language-//">uint256[] private _allTokens;
+/**
+  * @dev See {IERC721Enumerable-totalSupply}.
+  */
+function totalSupply() public view virtual override returns (uint256) {
+   return _allTokens.length;
+}
+</code></pre>
+<p>Azuki ERC721a:</p>
+<pre><code class="language-uint256">/**
+  * @dev See {IERC721Enumerable-totalSupply}.
+  */
+function totalSupply() public view override returns (uint256) {
+    return currentIndex;
+}
+</code></pre>
+<p>可以看到相比 OZ ERC721Enumerable， Azuki ERC721a 沒有使用昂贵的 array 存储空间來保存 allTokens， 而是直接用 currentIndex 來返回（之所以能这样做是因为 Azuki ERC721a 的所有 tokenID 都是从 0 开始，逐个增长）。<br>
+<strong>Storage 存储空间的优化</strong><br>
+在 @openzeppelin/ERC721Enumerable 实现中，为了方便读取 NFT 的所有者信息，做了许多冗余的元数据存储，作为代价，在 mint 函数内，则需要额外的开销来存储这些信息。而 ERC721A 实现则相反，将所占的必须存储压缩到了最小，这样虽然增加了读取操作的复杂度，但是，读取是免费的。<br>
+@openzeppelin/ERC721Enumerable 中所用的存储：</p>
+<pre><code class="language-abstract">    //存储钱包地址==&gt;(tokenIDindex==&gt;tokenID)
+    mapping(address =&gt; mapping(uint256 =&gt; uint256)) private _ownedTokens;
+    //保存了该 NFT ID 到用户拥有索引的映射,如_ownedTokensIndex[201] = 0 表示 ID 为      201 的该 NFT 是所属用户的拥有列表中的第一个。
+    mapping(uint256 =&gt; uint256) private _ownedTokensIndex;
+    //表示了所以被 mint 出来的该 NFT 的 ID 列表。
+    uint256[] private _allTokens;
+    //表示了具体某个 ID 的 NFT 在 _allTokens 列表中的位置
+    mapping(uint256 =&gt; uint256) private _allTokensIndex;
+    // ...
+}
+</code></pre>
+<p>而在 ERC721A 的实现中，去除了那两个冗余索引：</p>
+<pre><code class="language-contract">    Context,
+    ERC165,
+    IERC721,
+    IERC721Metadata,
+    IERC721Enumerable
+{
+  struct TokenOwnership {
+      address addr;
+      uint64 startTimestamp;
+  }
+
+  struct AddressData {
+      uint128 balance;
+      uint128 numberMinted;
+  }
+//ID =&gt; 钱包地址
+  mapping(uint256 =&gt; TokenOwnership) private _ownerships;
+//钱包地址 =&gt; 所有数量
+  mapping(address =&gt; AddressData) private _addressData;
+
+  // ...
+}
+</code></pre>
+<p><strong>优化 2 - 每个批次铸币请求更新所有者的余额一次，而不是每个铸币 NFT</strong><br>
+假设 Alice 有 2 个代币并想再购买 5 个。在 Solidity 中，更新储值需要消耗 gas。因此，如果我们在存储中跟踪 Alice 拥有多少代币，那么通过一次更新将 Alice 的持有量从 2 直接更新到 7 会更便宜，而不是将该值更新 5 次（在OZ中需要逐个mint，并且每个额外的代币增加一次，从 2 到 3、3到 4 等）。<br>
+虽然这是一个相对简单的概念，但 NFT 领域的绝大多数批量铸币厂还没有采用这一点，因为 OZ 默认实现不包括批量铸币厂 API，并且很容易在不调整的情况下从现成的现有解决方案中获取它. 我们强烈建议所有支持批量铸币的项目都考虑这个技巧。<br>
+Azuki ERC-721A mint function：</p>
+<pre><code class="language-function">    address to,
+    uint256 quantity,
+    bytes memory _data
+) internal {
+    uint256 startTokenId = currentIndex;
+    
+    ...
+    AddressData memory addressData = _addressData[to];
+    _addressData[to] = AddressData(
+        addressData.balance + uint128(quantity),
+        addressData.numberMinted + uint128(quantity)
+    );
+    _ownerships[startTokenId] = TokenOwnership(to, uint64(block.timestamp));
+    uint256 updatedIndex = startTokenId;
+    for (uint256 i = 0; i &lt; quantity; i++) {
+        emit Transfer(address(0), to, updatedIndex);
+        require(
+            _checkOnERC721Received(address(0), to, updatedIndex, _data),
+            &quot;ERC721A: transfer to non ERC721Receiver implementer&quot;
+        );
+        updatedIndex++;
+    }
+    currentIndex = updatedIndex;
+    _afterTokenTransfers(address(0), to, startTokenId, quantity);
+}
+</code></pre>
+<p>这样一来，ERC721A 做到了就把对 storage 的写入从 O(N) 优化到了 O(1) 。单次 mint 的数量越多，优化效果则越明显。<br>
+<strong>优化 3 - 每个批次铸币请求更新一次所有者数据，而不是每个铸币 NFT</strong><br>
+这在精神上类似于优化 2。假设 Alice 想购买 3 个代币 - 代币 #100、#101 和 #102。与其将 Alice 保存为所有者 3 次（每次都要花费我们的 gas），我们可以改为只保存一次所有者值，这种方式在语义上意味着 Alice 拥有所有 3 个令牌。<br>
+如何？假设 Alice 铸造代币 #100、#101 和 #102，而 Bob 铸造代币 #103 和 #104。内部所有者跟踪器如下所示：<br>
+<img src="https://s2.loli.net/2022/05/12/ZTHS6cOinkMuaNx.png" alt="token队列.png" loading="lazy"><br>
+这里的关键是，如果我们想查看谁拥有 #102，我们实际上不需要将 Alice 明确设置为 #102 的明确所有者。我们可以更改 ownerOf 函数来执行以下操作：<br>
+<img src="https://s2.loli.net/2022/05/12/eFEXUnH49qN3WJG.png" alt="OwnerOf.png" loading="lazy"><br>
+关键见解：如果我们将其实现更改为递减，直到它找到明确的所有者集，ownerOf 仍然按预期工作。<br>
+虽然如果代币不是 HODL 的话，这些延迟的所有者写入可能仍会在代币生命周期的后期发生，但我们仍然期望从整体上节省大量净成本，因为这可以减少铸币厂的 gas 消耗，从而降低集中 gas 的严重性薄荷时间整个生态系统的峰值。这种优化涉及一些额外的逻辑，特别是在传输方面，</p>
+<h1 id="erc-721a存在的问题">ERC-721A存在的问题</h1>
+<p>因为Azuki ERC-721A中TokenID必须要保持连续性为基础，所以目前Azuki ERC-721A并没有提供 burn Token 功能。所以要使用类似销毁NFT的功能，Azuki ERC-721A则不试用。如果你的需求是TokenID是随机数，那么Azuki ERC-721A也不适用。</p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://tangminjie.github.io/tag/TCMNyywPJ/" class="tag">
+                    ERC协议
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://tangminjie.github.io/post/duo-qian-qian-bao/">
+                  <h3 class="post-title">
+                    多签钱包
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
