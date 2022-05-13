@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://tangminjie.github.io</id>
-    <title>Tangminjie Blog</title>
-    <updated>2022-05-13T19:01:21.918Z</updated>
+    <title>Tangminjie&apos;s Blog</title>
+    <updated>2022-05-13T19:10:52.383Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://tangminjie.github.io"/>
     <link rel="self" href="https://tangminjie.github.io/atom.xml"/>
+    <subtitle>个人技术博客，做好当下</subtitle>
     <logo>https://tangminjie.github.io/images/avatar.png</logo>
     <icon>https://tangminjie.github.io/favicon.ico</icon>
-    <rights>All rights reserved 2022, Tangminjie Blog</rights>
+    <rights>All rights reserved 2022, Tangminjie&apos;s Blog</rights>
     <entry>
         <title type="html"><![CDATA[ERC-721A]]></title>
         <id>https://tangminjie.github.io/post/erc-721a/</id>
