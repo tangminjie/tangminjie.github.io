@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://tangminjie.github.io</id>
     <title>Tangminjie&apos;s Blog</title>
-    <updated>2022-05-18T15:28:08.141Z</updated>
+    <updated>2022-05-24T14:27:23.981Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://tangminjie.github.io"/>
     <link rel="self" href="https://tangminjie.github.io/atom.xml"/>
@@ -497,10 +497,347 @@ AssertionError: expected '562046206989085878832492993516240920558397288279' to e
         </link>
         <updated>2022-04-26T09:13:58.000Z</updated>
         <content type="html"><![CDATA[<h1 id="合约升级">合约升级</h1>
-<p>**  合约升级的三种模式： **<br>
+<h2 id="合约升级的三种模式">合约升级的三种模式：</h2>
+<p>在openzeppelin-labs中提出了三种合约代理升级得方案：<br>
 1.继承存储模式 Inherited Storage<br>
 2.永久存储模式 Eternal Storage<br>
-3.非结构化存储模式 Unstructured Storage</p>
+3.非结构化存储模式 Unstructured Storage<br>
+在 https://github.com/OpenZeppelin/openzeppelin-labs.git 中有三种升级方式实验室版本得实现demo,在openzeppelin-constract正式版中提供了Proxy库来实现代理升级得架构，使用得是非结构化存储模式，所以我们重点学习整个模式。<br>
+<strong>非结构化存储模式 Unstructured Storage</strong><br>
+非结构化存储模式类似继承存储模式，但并不需要目标合约继承与升级相关的任何状态变量。此模式使用代理合约中定义的非结构化存储插槽来保存升级所需的数据。<br>
+在代理合约中，我们定义了一个常量变量，在对它进行Hash时，应提供足够随机的存储位置来存储代理合约调用逻辑合约的地址。</p>
+<pre><code class="language-bytes32">keccak256(&quot;org.zeppelinos.proxy.implementation&quot;);
+</code></pre>
+<p>在erc-1967中规定了存储插槽得随机位置算法。由于常量不会占用存储插槽，因此不必担心implementationPosition被目标合约意外覆盖。由于Solidity状态变量存储的规定，目标合约中定义的其他内容使用此存储插槽冲突的可能性极小。<br>
+通过这种模式，逻辑合约不需要知道代理合约的存储结构，但是所有未来的逻辑合约都必须继承其初始版本定义的存储变量。就像在继承存储模式中一样，将来升级的目标合约可以升级现有功能以及引入新功能和新存储变量。<br>
+并且Zeppelin在实现这种存储代理模式时，引入了代理所有权的概念。只有代理所有者有权将新版本合约写入代理合约中，或者将所有权进行移交。</p>
+<h1 id="openzeppelin的合约升级方式">Openzeppelin的合约升级方式</h1>
+<p><strong>ERC-1967</strong><br>
+ERC-1967标准化了代理委托的逻辑合约的地址的存储插槽地址以及其他特定于代理的信息的位置<br>
+1.逻辑合约地址：<br>
+存储槽0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc （bytes32(uint256(keccak256('eip1967.proxy.implementation')) - 1)）<br>
+2.信标合约地址<br>
+存储槽0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50（bytes32(uint256(keccak256('eip1967.proxy.beacon')) - 1)）<br>
+3.管理员地址<br>
+存储槽0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103 （bytes32(uint256(keccak256('eip1967.proxy.admin')) - 1)）</p>
+<h2 id="proxy底层代码实现升级">Proxy底层代码实现升级</h2>
+<p>openzeppenlin proxy库实现了非结构化存储代理合约的底层实现。主要功能集中在以下几个合约文件中：<br>
+1.Proxy: 实现核心委托功能的抽象合约。<br>
+2.ERC1967Upgrade：获取和设置 EIP1967 中定义的存储槽的内部函数<br>
+3.ERC1967Proxy：使用 EIP1967 存储槽的代理。默认不可升级。<br>
+4.TransparentUpgradeableProxy：具有内置管理和升级界面的代理。<br>
+5.UUPSUpgradeable：将包含在实施合同中的可升级机制。<br>
+6.BeaconProxy：从信标合约中检索其实现的代理。<br>
+7.UpgradeableBeacon：带有内置管理员的信标合约，可以升级BeaconProxy指向它的指向。<br>
+在实际使用proxy升级时我们需要部署三个合约地址：<br>
+1.业务合约 Params 部署（先不进行初始化，initialize，本方法对应的 code 为 0x8129fc1c ）<br>
+2.ProxyAdmin 管理合约部署，代理合约的管理员<br>
+3.TransparentUpgradeableProxy 代理合约，此为用户直接交互的合约地址，一直不变；<br>
+合约升级：<br>
+1.逻辑合约 Params 升级为 ParamsNew;<br>
+2.调用 ProxyAdmin 进行升级;</p>
+<p>ProxyAdmin 提供两个方法进行升级：<br>
+1.upgrade，需要传入 proxy 地址，新的逻辑实现地址;<br>
+2.upgradeAndCall，需要传入 proxy 地址，新的逻辑实现地址，初始化调用数据</p>
+<pre><code class="language-//">proxyAdminContract = await proxyAdminContractFactory.deploy();
+  await proxyAdminContract.deployed();
+  console.log(&quot;ProxyAdmin contract address: &quot;, proxyAdminContract.address)
+    // Deploy TransparentUpgradeableProxy
+  let transparentUpgradeableProxyContractFactory = await ethers.getContractFactory(
+    'TransparentUpgradeableProxy'
+  );
+  transparentUpgradeableProxyContract = await transparentUpgradeableProxyContractFactory.deploy(params.address, proxyAdminContract.address,&quot;0x8129fc1c&quot; );
+  await transparentUpgradeableProxyContract.deployed();
+
+    let paramsNewContractFactory = await ethers.getContractFactory('ParamsNew');
+  paramsNew = await paramsNewContractFactory.deploy();
+  await paramsNew.deployed();
+  //update constract 
+  await proxyAdminContract.upgrade(transparentUpgradeableProxyContract.address,paramsNew.address );
+</code></pre>
+<p><strong>ProxyAdmin.sol</strong><br>
+管理合约，主要实现了代理合约的管理者地址的设置和获取，检查。<br>
+还对外提供两个升级接口：</p>
+<pre><code class="language-/**">     * @dev Upgrades `proxy` to `implementation`. See {TransparentUpgradeableProxy-upgradeTo}.
+     *
+     * Requirements:
+     *
+     * - This contract must be the admin of `proxy`.
+     */
+    function upgrade(TransparentUpgradeableProxy proxy, address implementation) public virtual onlyOwner {
+        proxy.upgradeTo(implementation);
+    }
+
+    /**
+     * @dev Upgrades `proxy` to `implementation` and calls a function on the new implementation. See
+     * {TransparentUpgradeableProxy-upgradeToAndCall}.
+     *
+     * Requirements:
+     *
+     * - This contract must be the admin of `proxy`.
+     */
+    function upgradeAndCall(
+        TransparentUpgradeableProxy proxy,
+        address implementation,
+        bytes memory data
+    ) public payable virtual onlyOwner {
+        proxy.upgradeToAndCall{value: msg.value}(implementation, data);
+    }
+    ```
+**TransparentUpgradeableProxy.sol**
+代理合约，为用户交互的地址，一直不变，继承了ERC1967Proxy。在构造函数中实现了ERC1967的初始化和管理者的修改：
+```    constructor(
+        address _logic,
+        address admin_,
+        bytes memory _data
+    ) payable ERC1967Proxy(_logic, _data) {
+        assert(_ADMIN_SLOT == bytes32(uint256(keccak256(&quot;eip1967.proxy.admin&quot;)) - 1));
+        _changeAdmin(admin_);
+    }
+    ```
+对外提供了获取逻辑合约地址接口：
+``` function implementation() external ifAdmin returns (address implementation_) {
+        implementation_ = _implementation();
+    }
+    ```
+对外提供了_upgradeToandCall的封装：
+```    /**
+     * @dev Upgrade the implementation of the proxy.
+     *
+     * NOTE: Only the admin can call this function. See {ProxyAdmin-upgrade}.
+     */
+    function upgradeTo(address newImplementation) external ifAdmin {
+        _upgradeToAndCall(newImplementation, bytes(&quot;&quot;), false);
+    }
+
+    /**
+     * @dev Upgrade the implementation of the proxy, and then call a function from the new implementation as specified
+     * by `data`, which should be an encoded function call. This is useful to initialize new storage variables in the
+     * proxied contract.
+     *
+     * NOTE: Only the admin can call this function. See {ProxyAdmin-upgradeAndCall}.
+     */
+    function upgradeToAndCall(address newImplementation, bytes calldata data) external payable ifAdmin {
+        _upgradeToAndCall(newImplementation, data, true);
+    }
+    ```
+**ERC1967Proxy.sol**
+实现了调用_upgradeToAndCall为逻辑合约进行初始化，调用ERC1967Upgrade._getImplementation接口提供逻辑合约地址给到Proxy
+```   /**
+     * @dev Returns the current implementation address.
+     */
+    function _implementation() internal view virtual override returns (address impl) {
+        return ERC1967Upgrade._getImplementation();
+    }
+    ```
+**ERC1967Upgrade**
+和ERC1967插槽真正的底层交互接口：
+主要实现了对_IMPLEMENTATION_SLOT，_ADMIN_SLOT，_BEACON_SLOT三个插槽的写入和读取。
+具体代码实现可以查看openzepplin-constract-proxy源码，或者阅读我重写的升级代码：
+https://github.com/tangminjie/upgradable-contract
+
+**Proxy.sol**
+delegatecall 委托调用内联汇编代码的实现，当升级后的逻辑合约attach到TransparentUpgradeableProxy进行调用时会调用到proxy的fallbak从而进行delegatecall调用。作用域还是在TransparentUpgradeableProxy上，实际数据储存在插槽中，不会因为升级改变。
+
+![微信图片_20220524191526.png](https://s2.loli.net/2022/05/24/yF6CiRzuleDr8SK.png)
+
+**注意事项：**
+可升级合约的存储不能乱，即：只能新增存储项，不能修改顺序。这种限制只影响状态变量。你可以随心所欲地改变合约的功能和事件。
+不能有构造函数，使用 Initialize 合约替代，通过在方法上添加 initializer 标签，确保只被初始化一次。
+继承的父合约也需要能满足升级，本例中的 Ownable 采用 OwnableUpgradeable，支持升级
+可使用 OpenZeppelin 插件验证合约是否为可升级合约，以及升级时是否有冲突。
+
+##  Upgrades Plugins for hardhat 插件实现升级  ##
+Upgrades Plugin可以讲升级集成到您现有的工作流中。用于在以太坊上部署可升级合约。
+主要功能：1.部署可升级合约
+                 2.升级已部署合约
+                 3.管理代理管理员权限
+                 4.在测试脚本中使用
+
+**安装**
+```npm install --save-dev @openzeppelin/hardhat-upgrades @nomiclabs/hardhat-ethers ethers
+</code></pre>
+<p><strong>加载到Hardhat 配置文件中：</strong></p>
+<pre><code class="language-//">require('@openzeppelin/hardhat-upgrades');
+// hardhat.config.ts
+import '@openzeppelin/hardhat-upgrades';
+</code></pre>
+<p><strong>在部署脚本中的使用</strong></p>
+<pre><code class="language-//">const { ethers, upgrades } = require(&quot;hardhat&quot;);
+
+async function main() {
+  const Box = await ethers.getContractFactory(&quot;Box&quot;);
+  const box = await upgrades.deployProxy(Box, [42]);
+  await box.deployed();
+  console.log(&quot;Box deployed to:&quot;, box.address);
+}
+
+main();
+</code></pre>
+<p>这将自动检查Box合约是否是升级安全的，设置代理管理员（如果需要），为合约部署一个实现合约Box（除非之前的部署已经有一个），创建一个代理，并通过调用初始化它initialize(42).<br>
+然后，在另一个脚本中，您可以使用该upgradeProxy功能将部署的实例升级到新版本。新版本可以是不同的合约（例如BoxV2），或者您可以修改现有Box合约并重新编译它 - 插件会注意到它已更改。</p>
+<pre><code class="language-//">const { ethers, upgrades } = require(&quot;hardhat&quot;);
+
+async function main() {
+  const BoxV2 = await ethers.getContractFactory(&quot;BoxV2&quot;);
+  const box = await upgrades.upgradeProxy(BOX_ADDRESS, BoxV2);
+  console.log(&quot;Box upgraded&quot;);
+}
+
+main();
+</code></pre>
+<p>注意：虽然此插件会跟踪您为每个网络部署的所有实施合同，但为了重用它们并验证存储兼容性，它不会跟踪您已部署的代理。这意味着您将需要手动跟踪每个部署地址，以便在需要时将其提供给升级功能。</p>
+<p><strong>在测试脚本中的使用</strong></p>
+<pre><code class="language-const">
+describe(&quot;Box&quot;, function() {
+  it('works', async () =&gt; {
+    const Box = await ethers.getContractFactory(&quot;Box&quot;);
+    const BoxV2 = await ethers.getContractFactory(&quot;BoxV2&quot;);
+
+    const instance = await upgrades.deployProxy(Box, [42]);
+    const upgraded = await upgrades.upgradeProxy(instance.address, BoxV2);
+
+    const value = await upgraded.value();
+    expect(value.toString()).to.equal('42');
+  });
+});
+</code></pre>
+<h2 id="编写可升级合约约束">编写可升级合约约束</h2>
+<p><strong>初始化</strong><br>
+因为在合约部署时会主动调用构造函数，但是在升级中的储存插槽是不应该改变的，所以可升级合约中不能使用构造函数。我们用初始化函数来代替构造函数：</p>
+<pre><code class="language-//">// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.0;
+
+contract MyContract {
+    uint256 public x;
+    bool private initialized;
+
+    function initialize(uint256 _x) public {
+        require(!initialized, &quot;Contract instance has already been initialized&quot;);
+        initialized = true;
+        x = _x;
+    }
+}
+</code></pre>
+<p>OpenZeppelin Contracts 提供了一个Initializable基础合约，它有一个initializer修饰符来处理这个问题：</p>
+<pre><code class="language-//">// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.0;
+
+import &quot;@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol&quot;;
+
+contract MyContract is Initializable {
+    uint256 public x;
+
+    function initialize(uint256 _x) public initializer {
+        x = _x;
+    }
+}
+</code></pre>
+<p>在编写初始化程序时，需要特别注意手动调用所有父合约的初始化程序：</p>
+<pre><code class="language-//">// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.0;
+
+import &quot;@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol&quot;;
+
+contract BaseContract is Initializable {
+    uint256 public y;
+
+    function initialize() public initializer {
+        y = 42;
+    }
+}
+
+contract MyContract is BaseContract {
+    uint256 public x;
+
+    function initialize(uint256 _x) public initializer {
+        BaseContract.initialize(); // Do not forget this call!
+        x = _x;
+    }
+}
+</code></pre>
+<p><strong>使用可升级的智能合约库</strong><br>
+请记住，此限制不仅会影响您的合约，还会影响您从库中导入的合约。以ERC-20合约为例子，<br>
+@openzeppelin/contracts/token/ERC20/ERC20.sol 中实现的ERC-20合约并不符合可升级合约标准，所以我们需要使用<br>
+// @openzeppelin/contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol：</p>
+<pre><code class="language-//">pragma solidity ^0.6.0;
+ ...
+contract ERC20Upgradeable is Initializable, ContextUpgradeable, IERC20Upgradeable {
+ ...
+   string private _name;
+   string private _symbol;
+   uint8 private _decimals;
+
+   function __ERC20_init(string memory name, string memory symbol) internal initializer {
+       __Context_init_unchained();
+       __ERC20_init_unchained(name, symbol);
+   }
+
+   function __ERC20_init_unchained(string memory name, string memory symbol) internal initializer {
+       _name = name;
+       _symbol = symbol;
+       _decimals = 18;
+   }
+ ...
+}
+</code></pre>
+<p>无论是使用 OpenZeppelin Contracts 还是其他智能合约库，请始终确保将包设置为处理可升级的合约。<br>
+<strong>避免在字段声明中使用初始值</strong><br>
+Solidity 允许在合同中声明字段时定义字段的初始值。</p>
+<pre><code class="language-contract">    uint256 public hasInitialValue = 42; // equivalent to setting in the constructor
+}
+</code></pre>
+<p>相当于在构造函数中设置这些值，因此不适用于可升级合约。确保所有初始值都在初始化函数中设置，如下所示；否则，任何可升级的实例都不会设置这些字段。</p>
+<pre><code class="language-contract">    uint256 public hasInitialValue;
+
+    function initialize() public initializer {
+        hasInitialValue = 42; // set initial value in initializer
+    }
+}
+</code></pre>
+<p><strong>初始化Implementation Contract</strong><br>
+不要让实施合同未初始化。攻击者可以接管未初始化的实现合约，这可能会影响代理。为防止实现合约被使用，应该在构造函数中调用_disableInitializers以在部署时自动锁定它：</p>
+<pre><code class="language-///">constructor() {
+    _disableInitializers();
+}
+</code></pre>
+<p><strong>创建实例</strong><br>
+当从你的合约代码创建一个新的合约实例时，这些创建由 Solidity 直接处理，而不是由 OpenZeppelin Upgrades 处理，这意味着这些合约将不可升级。<br>
+例如，在以下示例中，即使MyContract部署为可升级，token创建的合约也不是：</p>
+<pre><code class="language-//">// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.0;
+
+import &quot;@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol&quot;;
+import &quot;@openzeppelin/contracts/token/ERC20/ERC20.sol&quot;;
+
+contract MyContract is Initializable {
+    ERC20 public token;
+
+    function initialize() public initializer {
+        token = new ERC20(&quot;Test&quot;, &quot;TST&quot;); // This contract will not be upgradeable
+    }
+}
+</code></pre>
+<p>如果您希望ERC20实例可升级，实现此目的的最简单方法是简单地接受该合约的实例作为参数，并在创建后注入它：</p>
+<pre><code class="language-//">// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.0;
+
+import &quot;@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol&quot;;
+import &quot;@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol&quot;;
+
+contract MyContract is Initializable {
+    IERC20Upgradeable public token;
+
+    function initialize(IERC20Upgradeable _token) public initializer {
+        token = _token;
+    }
+}
+</code></pre>
+<p><strong>潜在不安全操作</strong><br>
+在使用可升级的智能合约时，您将始终与合约实例交互，而永远不会与底层逻辑合约交互。然而，没有什么能阻止恶意行为者直接向逻辑合约发送交易。这不会构成威胁，因为逻辑合约状态的任何更改都不会影响您的合约实例，因为逻辑合约的存储从未在您的项目中使用。<br>
+但是，有一个例外。如果对逻辑合约的直接调用触发了selfdestruct操作，那么逻辑合约将被销毁，并且您的所有合约实例最终都会将所有调用委托给一个地址而无需任何代码。这将有效地破坏您项目中的所有合同实例。<br>
+delegatecall如果逻辑合约包含一个操作，也可以达到类似的效果。如果可以将合约delegatecall变成包含 a 的恶意合约selfdestruct，则调用合约将被销毁。<br>
+因此，不允许在您的合同中使用任何一个selfdestruct或delegatecall在您的合同中使用。</p>
 ]]></content>
     </entry>
     <entry>
