@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://tangminjie.github.io</id>
     <title>Tangminjie&apos;s Blog</title>
-    <updated>2022-05-24T15:18:46.827Z</updated>
+    <updated>2022-05-24T22:28:06.870Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://tangminjie.github.io"/>
     <link rel="self" href="https://tangminjie.github.io/atom.xml"/>
@@ -937,6 +937,96 @@ bytes: 0x00000000000000000000000000000000000000000000000000000000000000200000000
 ]]></content>
     </entry>
     <entry>
+        <title type="html"><![CDATA[Create2的功能以及实际应用场景]]></title>
+        <id>https://tangminjie.github.io/post/create2-de-gong-neng-yi-ji-shi-ji-ying-yong-chang-jing/</id>
+        <link href="https://tangminjie.github.io/post/create2-de-gong-neng-yi-ji-shi-ji-ying-yong-chang-jing/">
+        </link>
+        <updated>2022-04-24T16:34:42.000Z</updated>
+        <content type="html"><![CDATA[<h1 id="create2的功能">Create2的功能</h1>
+<h2 id="creat和create2的区别">creat和create2的区别</h2>
+<p>使用Create在创建合约时，将根据创建合约的地址(通常为部署的钱包地址或者合约地址)和每次创建合约交易时的计数器(nonce)来计算合约的地址。nonce为(该地址发送交易的总数，对于合约账户每创建一个合约nonce+1)的哈希。<br>
+如果你指定了一个可选的 <code>salt</code>（一个bytes32值），那么合约创建将使用Create2的机制来生成新合约的地址。</p>
+<h2 id="create2功能说明">create2功能说明</h2>
+<p>CREATE2的用法和之前讲的Create类似，同样是new一个合约，并传入新合约构造函数所需的参数，只不过要多传一个salt参数：<br>
+<code>Contract x = new Contract{salt: _salt, value: _value}(params)</code><br>
+其中Contract是要创建的合约名，x是合约对象（地址），_salt是指定的盐；如果构造函数是payable，可以创建时转入_value数量的ETH，params是新合约构造函数的参数。<br>
+<strong>salt 常用的计算方式</strong><br>
+1.使用user_id的哈希<br>
+2.使用部署钱包地址或者调用合约地址的哈希<br>
+3.在uniswapV2中使用交易对的地址哈希</p>
+<h2 id="create2如何计算地址">create2如何计算地址</h2>
+<p>CREATE2的目的是为了让合约地址独立于未来的事件。不管未来区块链上发生了什么，你都可以把合约部署在事先计算好的地址上。用CREATE2创建的合约地址由4个部分决定：<br>
+1.0xFF：一个常数，避免和CREATE冲突<br>
+2.创建者地址<br>
+3.salt（盐）：一个创建者给定的数值<br>
+4.待部署合约的字节码（bytecode）<br>
+<code>newAddress = hash(&quot;0xFF&quot;,创建者地址, salt, bytecode)</code><br>
+CREATE2 确保，如果创建者使用 CREATE2 和提供的 salt 部署给定的合约bytecode，它将存储在 新地址 中。</p>
+<h1 id="在remix上验证create2">在remix上验证create2</h1>
+<p>Pair.sol</p>
+<pre><code class="language-pragma">contract Pair{
+    address public factory; // 工厂合约地址
+    address public token0; // 代币1
+    address public token1; // 代币2
+
+    constructor() payable {
+        factory = msg.sender;
+    }
+
+    // called once by the factory at time of deployment
+    function initialize(address _token0, address _token1) external {
+        require(msg.sender == factory, 'UniswapV2: FORBIDDEN'); // sufficient check
+        token0 = _token0;
+        token1 = _token1;
+    }
+}
+</code></pre>
+<p>PairFactory2.sol</p>
+<pre><code class="language-pragma">import &quot;./Pair.sol&quot;;
+
+contract PairFactory2{
+        mapping(address =&gt; mapping(address =&gt; address)) public getPair; // 通过两个代币地址查Pair地址
+        address[] public allPairs; // 保存所有Pair地址
+
+        function createPair2(address tokenA, address tokenB) external returns (address pairAddr) {
+            // 计算用tokenA和tokenB地址计算salt
+            (address token0, address token1) = tokenA &lt; tokenB ? (tokenA, tokenB) : (tokenB, tokenA); //将tokenA和tokenB按大小排序
+            bytes32 salt = keccak256(abi.encodePacked(token0, token1));
+            // 用create2部署新合约
+            Pair pair = new Pair{salt: salt}(); 
+            // 调用新合约的initialize方法
+            pair.initialize(tokenA, tokenB);
+            // 更新地址map
+            pairAddr = address(pair);
+            allPairs.push(pairAddr);
+            getPair[tokenA][tokenB] = pairAddr;
+            getPair[tokenB][tokenA] = pairAddr;
+        }
+
+// 提前计算pair合约地址
+function calculateAddr(address tokenA, address tokenB) public view returns(address predictedAddress){
+    // 计算用tokenA和tokenB地址计算salt
+    (address token0, address token1) = tokenA &lt; tokenB ? (tokenA, tokenB) : (tokenB, tokenA); //将tokenA和tokenB按大小排序
+    bytes32 salt = keccak256(abi.encodePacked(token0, token1));
+    // 计算合约地址方法 hash()
+    predictedAddress = address(uint160(uint(keccak256(abi.encodePacked(
+        bytes1(0xff),
+        address(this),
+        salt,
+        keccak256(type(Pair).creationCode)
+    )))));
+}
+
+}
+</code></pre>
+<p>对比计算出的合约地址和create2创建出来的合约地址：<br>
+<img src="https://s2.loli.net/2022/05/25/1i9wPnAUfuRE7cX.png" alt="微信图片_20220525010322.png" loading="lazy"></p>
+<h1 id="create2的实际应用场景">create2的实际应用场景</h1>
+<p>1.交易所为新用户预留创建钱包合约地址。<br>
+2.由 CREATE2 驱动的 factory 合约，在uniswapV2中交易对的创建是在 Factory中调用create2完成。这样做的好处是: 它可以得到一个确定的pair地址, 使得 Router中就可以通过 tokenA, tokenB 计算出pair地址, 不再需要执行一次 Factory.getPair(tokenA, tokenB) 的跨合约调用。</p>
+]]></content>
+    </entry>
+    <entry>
         <title type="html"><![CDATA[ERC-777]]></title>
         <id>https://tangminjie.github.io/post/erc-777/</id>
         <link href="https://tangminjie.github.io/post/erc-777/">
@@ -1483,226 +1573,6 @@ playerAddress
 }
 </code></pre>
 <p>您会注意到该项目的信息包含在元数据中，但该信息不在链上！所以游戏开发者可以改变底层元数据，改变游戏规则！如果你想把所有的物品信息放在链上，你可以扩展 ERC721 来这样做（虽然它会相当昂贵）。您还可以利用 IPFS 来存储 tokenURI 信息。</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[ERC-20]]></title>
-        <id>https://tangminjie.github.io/post/erc-20/</id>
-        <link href="https://tangminjie.github.io/post/erc-20/">
-        </link>
-        <updated>2022-04-20T07:03:28.000Z</updated>
-        <content type="html"><![CDATA[<h1 id="概述">概述</h1>
-<p>ERC-20 提供了一个同质化代币的标准，换句话说，每个代币与另一个代币（在类型和价值上）完全相同。 例如，一个 ERC-20 代币就像 ETH 一样，意味着一个代币会并永远会与其他代币一样。<br>
-ERC20简单理解成以太坊上的一个代币协议，所有基于以太坊开发的代币合约都遵守这个协议。遵守这些协议的代币我们可以认为是标准化的代币，而标准化带来的好处是兼容性好。这些标准化的代币可以被各种以太坊钱包支持，用于不同的平台和项目。</p>
-<h1 id="erc20协议标准">ERC20协议标准</h1>
-<p>ERC20标准规定，一共包括：6个函数，2个event，3个变量。</p>
-<pre><code class="language-contract">    //查询代币发行总量
-  	function totalSupply() public constant returns (uint);  
-      //查询某个账户余额
-  	function balanceOf(address tokenOwner) public constant returns (uint balance);
-      //查询某个账户可转账金额。用于控制代币的交易
-   	function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-       //从当前账户，实现代币交易
- 	function transfer(address to, uint tokens) public returns (bool success); 
-     //授权，允许某个账户花费此地址可用的代币数
-  	function approve(address spender, uint tokens) public returns (bool success); 
-      //实现用户之间的代币交易
-  	function transferFrom(address from, address to, uint tokens) public returns (bool success);
-     //当代币交易时会触发此函数
-  	event Transfer(address indexed from, address indexed to, uint tokens);  
-     //当成功调用approve函数后会触发此函数
-  	event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-
-    string public constant name = &quot;Zarten Token&quot;; //代币名称
-    string public constant symbol = &quot;ZAR&quot;;              //代币简称
-    uint8 public constant decimals = 18;  // 18 is the most common number of decimal places
-    // 0.0000000000000000001  个代币
-    //返回token使用的小数点后几位。比如设置为3,就是支持0.001表示。一般为18位
-}
-</code></pre>
-<h1 id="erc20工作原理">ERC20工作原理</h1>
-<h2 id="变量及函数实现">变量及函数实现</h2>
-<h3 id="定义变量">定义变量</h3>
-<p>一般定义两个映射变量：保存每个地址对应的余额。<br>
-<code>mapping (address =&gt; uint256) public balances</code><br>
-两层映射。保存着某个地址A允许另一个地址B可操作的金额。最外层映射为某个地址A，内层映射为另一个地址B，值为可操作（发起交易）金额总量。<br>
-<code>mapping(address =&gt; mapping(address =&gt;uint256)) public allowed</code></p>
-<h2 id="函数实现">函数实现</h2>
-<h3 id="balanceof">balanceOf()</h3>
-<p>从映射变量balances中取出某个地址的余额。</p>
-<pre><code class="language-function">       return balances[tokenOwner];
-}
-</code></pre>
-<h3 id="transfer">transfer()</h3>
-<p>当前账户转账操作。<br>
-msg.sender为保留字，指这个函数的地址。<br>
-sub：减 add：加<br>
-首先从当前账户减去相应金额。<br>
-同时往对方账户加上对应金额。<br>
-并调用Transfer函数做通知。</p>
-<pre><code class="language-function">    balances[msg.sender] = balances[msg.sender].sub(tokens);
-    balances[to] = balances[to].add(tokens);
-    Transfer(msg.sender, to, tokens);
-    return true;
-}
-</code></pre>
-<h3 id="transferfrom">transferFrom()</h3>
-<p>用户之间账户转账操作。由from地址发起转账交易。<br>
-from地址账户减去相应金额。<br>
-from从msg.sender总共可操作金额减少相应金额。<br>
-to地址账户增加相应金额。<br>
-调用Transfer函数做通知。<br>
-approve后可以转移对方代币给自己</p>
-<pre><code class="language-function">        balances[from] = balances[from].sub(tokens);
-        allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
-        balances[to] = balances[to].add(tokens);
-        Transfer(from, to, tokens);
-        return true;
- }
-</code></pre>
-<h3 id="approve">approve()</h3>
-<p>设置某账户spender可操控msg.sender的代币数。<br>
-设置spender地址从msg.sender可使用的代币数。<br>
-调用Approval函数做通知。</p>
-<pre><code class="language-function">        allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
-        return true;
- }
-</code></pre>
-<h1 id="erc20高级功能代码">ERC20高级功能代码</h1>
-<p>ERC20代币有时需要其他一些额外的高级功能，比如代币管理、代币增发、空投代币、代币冻结、销毁代币、代币兑换等。</p>
-<h2 id="代币管理">代币管理</h2>
-<p>有时代币需要有一个管理者功能。使用onlyOwner修饰的接口只能有合约所有者调用，否则会抛出异常。<br>
-添加一个owned合约，如下：</p>
-<pre><code class="language-contract">    address public owner;
-
-    constructor() public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner public {
-        owner = newOwner;
-    }
-}
-</code></pre>
-<h2 id="代币增发">代币增发</h2>
-<p>代币增发可使代币总供应量增加，可以指定某个账户的代币增加，同时总供应量也随之增加。<br>
-使用onlyOwner修饰器，只能owner调用。this表示当前合约。</p>
-<pre><code class="language-function">        balances[target] += mintedAmount;
-        _totalSupply += mintedAmount;
-        emit Transfer(address(0), address(this), mintedAmount);
-        emit Transfer(address(this), target, mintedAmount);
-    }
-</code></pre>
-<h2 id="代币销毁">代币销毁</h2>
-<p>首先添加一个通知客户端代币消费的事件。</p>
-<pre><code class="language-event"></code></pre>
-<p>销毁代币非为销毁管理者代币和销毁用户代币。此时需要管理者去进行销毁。</p>
-<h2 id="销毁管理者代币">销毁管理者代币</h2>
-<pre><code class="language-function">        require(balances[owner] &gt;= _value);
-        balances[owner] -= _value;
-        _totalSupply -= _value;
-        emit Burn(owner, _value);
-        return true;
-    }
-</code></pre>
-<h2 id="销毁用户代币">销毁用户代币</h2>
-<p>销毁之前需要判断用户代币的数量是否大于销毁数量，并且判断allowed可以使用的代币大于需要销毁的代币数量。</p>
-<pre><code class="language-function">        require(balances[_from] &gt;= _value);
-        require(_value &lt;= allowed[_from][owner]);
-        balances[_from] -= _value;
-        allowed[_from][owner] -= _value;
-        _totalSupply -= _value;
-        emit Burn(_from, _value);
-        return true;
-    }
-</code></pre>
-<h2 id="代币冻结">代币冻结</h2>
-<p>有时需要冻结账户代币，也就是此账户不能转账操作。<br>
-1.首先添加一个账户冻结代币的映射<br>
-<code>mapping (address =&gt; bool) public frozenAccount;</code><br>
-2.添加冻结的通知函数<br>
-<code>event FrozenFunds(address target, bool frozen);</code><br>
-3..添加冻结的函数</p>
-<pre><code class="language-function">        frozenAccount[target] = freeze;
-        emit FrozenFunds(target, freeze);
-    }
-</code></pre>
-<p>4.在转账函数中判断涉及账户是否为冻结账户，否则不允许转账操作</p>
-<pre><code class="language-require(!frozenAccount[from]);">require(!frozenAccount[to]);
-</code></pre>
-<h2 id="批量代币空投">批量代币空投</h2>
-<p>有时需要往很多地址空投一些代币，这样可以使用批量转账。<br>
-假设从管理员账户空投。关键字memory为声明内存型的，存储的内容会在函数被调用（包括外部函数）时擦除，所以其使用开销相对较小。</p>
-<pre><code class="language-//空投代币">    function AirDrop(address[] memory _recipients, uint _values) onlyOwner public returns (bool) {
-        require(_recipients.length &gt; 0);
-
-        for(uint j = 0; j &lt; _recipients.length; j++){
-            transfer(_recipients[j], _values);
-        }
-
-        return true;
-    }
-</code></pre>
-<p>当然在实际应用中空投的数量并不是绝对的，大部分业务根据持有的代币比例或者NFT来计算空投。</p>
-<h2 id="代币兑换">代币兑换</h2>
-<p>有时代币需要与其他货币（Ether）进行兑换。<br>
-msg.value表示随消息发送的wei的数量，payable修饰函数表示允许从调用中接收以太币。<br>
-1.设置买卖价格的变量</p>
-<pre><code class="language-uint256">uint256 public buyPrice;
-</code></pre>
-<p>2.设置价格函数</p>
-<pre><code class="language-function">        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
-    }
-</code></pre>
-<p>3.接收以太币进行买操作</p>
-<pre><code class="language-function">        uint amount = msg.value / buyPrice;
-        emit Transfer(address(this), owner, amount);
-    }
-</code></pre>
-<p>4.卖操作</p>
-<pre><code class="language-function">        require(address(this).balance &gt;= amount * sellPrice);
-        emit Transfer(owner, address(this), amount);
-        owner.transfer(amount * sellPrice);
-    }
-</code></pre>
-<p>当然在实际应用中的价格由dex或者uniswap等去中心化交易所，通过AMM协议的交易对计算得出。</p>
-<h1 id="openzeppelin-erc-20实现">openzeppelin ERC-20实现</h1>
-<p>我们在写合约业务的时候可以选择自己实现ERC20的协议，当然也可以使用openzeppelin的第三方库。openzeppelin中有完善的ERC20实现。<br>
-首先我们来看下一下openzeppelin官方文档中对于ERC20的描述：<br>
-ERC20 代币合约跟踪可替代代币：任何一种代币都完全等同于任何其他代币；没有任何代币具有与之相关的特殊权利或行为。这使得 ERC20 代币可用于交换货币、投票权、质押等媒介。<br>
-使用openzeppelin来构建erc20-token也十分的方便：<br>
-我们在hardhat工程中通过 npm install @openzeppelin/contracts 来安装openzeppelin的支持，就可以import进来使用：<br>
-我们的合约经常通过继承使用，在这里我们将重用ERC20基本标准实现以及name,symbol和decimals可选扩展。此外，我们正在创建一个initialSupply令牌，它将分配给部署合约的地址。</p>
-<pre><code class="language-pragma">import &quot;@openzeppelin/contracts/token/ERC20/ERC20.sol&quot;;
-contract GLDToken is ERC20 {
-    constructor(uint256 initialSupply) public ERC20(&quot;Gold&quot;, &quot;GLD&quot;) {
-        _mint(msg.sender, initialSupply);
-    }
-}
-</code></pre>
-<p>就是这样！部署后，我们将能够查询部署者的余额：</p>
-<pre><code>&gt; GLDToken.balanceOf(deployerAddress)
-1000000000000000000000
-我们也可以将这些代币转移到其他账户：
-
-&gt; GLDToken.transfer(otherAddress, 300000000000000000000)
-&gt; GLDToken.balanceOf(otherAddress)
-300000000000000000000
-&gt; GLDToken.balanceOf(deployerAddress)
-700000000000000000000
-</code></pre>
-<h2 id="关于decimals">关于decimals</h2>
-<p>通常，您希望能够将您的代币分成任意数量：例如，如果您拥有5 GLD，您可能想发送1.5 GLD给朋友，并留给3.5 GLD自己。不幸的是，Solidity 和 EVM 不支持这种行为：只能使用整数（整数）。为了解决这个问题，ERC20提供了一个decimals字段，用于指定令牌有多少个小数位。为了能够转移1.5 GLD，decimals必须至少1，因为该数字有一个小数位。就像ETH的最小单位是wei。1eth = 10^18wei。<br>
-在openzeppelin中默认情况下，ERC20使用值18for decimals。要使用不同的值，您需要在构造函数中调用_setupDecimals。<br>
-因此，如果您想5使用 18 位小数的代币合约发送代币，调用的方法实际上是：<br>
-<code>transfer(recipient, 5 * 10^18);</code></p>
 ]]></content>
     </entry>
 </feed>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Create2的功能以及实际应用场景 | Tangminjie&#39;s Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://tangminjie.github.io/favicon.ico?v=1653431273353">
+<link rel="stylesheet" href="https://tangminjie.github.io/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="Create2的功能
+creat和create2的区别
+使用Create在创建合约时，将根据创建合约的地址(通常为部署的钱包地址或者合约地址)和每次创建合约交易时的计数器(nonce)来计算合约的地址。nonce为(该地址发送交易的总数，对..." />
+    <meta name="keywords" content="solidity" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://tangminjie.github.io">
+        <img src="https://tangminjie.github.io/images/avatar.png?v=1653431273353" class="site-logo">
+        <h1 class="site-title">Tangminjie&#39;s Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/nEjwCuZ71/" class="site-nav">
+            solidity
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/RGPrDS_1V/" class="site-nav">
+            TypeScript
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/TCMNyywPJ" class="site-nav">
+            ERC协议
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/DbwJLkrIK/" class="site-nav">
+            学习资料
+          </a>
+        
+      
+        
+          <a href="https://tangminjie.github.io/tag/p44-1Shu9" class="site-nav">
+            DEFI
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+          <a class="social-link" href="https://github.com/tangminjie" target="_blank">
+            <i class="fab fa-github"></i>
+          </a>
+        
+      
+        
+          <a class="social-link" href="https://twitter.com/Tang19010536" target="_blank">
+            <i class="fab fa-twitter"></i>
+          </a>
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      个人技术博客，做好当下
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://tangminjie.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Create2的功能以及实际应用场景</h2>
+            <div class="post-date">2022-04-25</div>
+            
+            <div class="post-content" v-pre>
+              <h1 id="create2的功能">Create2的功能</h1>
+<h2 id="creat和create2的区别">creat和create2的区别</h2>
+<p>使用Create在创建合约时，将根据创建合约的地址(通常为部署的钱包地址或者合约地址)和每次创建合约交易时的计数器(nonce)来计算合约的地址。nonce为(该地址发送交易的总数，对于合约账户每创建一个合约nonce+1)的哈希。<br>
+如果你指定了一个可选的 <code>salt</code>（一个bytes32值），那么合约创建将使用Create2的机制来生成新合约的地址。</p>
+<h2 id="create2功能说明">create2功能说明</h2>
+<p>CREATE2的用法和之前讲的Create类似，同样是new一个合约，并传入新合约构造函数所需的参数，只不过要多传一个salt参数：<br>
+<code>Contract x = new Contract{salt: _salt, value: _value}(params)</code><br>
+其中Contract是要创建的合约名，x是合约对象（地址），_salt是指定的盐；如果构造函数是payable，可以创建时转入_value数量的ETH，params是新合约构造函数的参数。<br>
+<strong>salt 常用的计算方式</strong><br>
+1.使用user_id的哈希<br>
+2.使用部署钱包地址或者调用合约地址的哈希<br>
+3.在uniswapV2中使用交易对的地址哈希</p>
+<h2 id="create2如何计算地址">create2如何计算地址</h2>
+<p>CREATE2的目的是为了让合约地址独立于未来的事件。不管未来区块链上发生了什么，你都可以把合约部署在事先计算好的地址上。用CREATE2创建的合约地址由4个部分决定：<br>
+1.0xFF：一个常数，避免和CREATE冲突<br>
+2.创建者地址<br>
+3.salt（盐）：一个创建者给定的数值<br>
+4.待部署合约的字节码（bytecode）<br>
+<code>newAddress = hash(&quot;0xFF&quot;,创建者地址, salt, bytecode)</code><br>
+CREATE2 确保，如果创建者使用 CREATE2 和提供的 salt 部署给定的合约bytecode，它将存储在 新地址 中。</p>
+<h1 id="在remix上验证create2">在remix上验证create2</h1>
+<p>Pair.sol</p>
+<pre><code class="language-pragma">contract Pair{
+    address public factory; // 工厂合约地址
+    address public token0; // 代币1
+    address public token1; // 代币2
+
+    constructor() payable {
+        factory = msg.sender;
+    }
+
+    // called once by the factory at time of deployment
+    function initialize(address _token0, address _token1) external {
+        require(msg.sender == factory, 'UniswapV2: FORBIDDEN'); // sufficient check
+        token0 = _token0;
+        token1 = _token1;
+    }
+}
+</code></pre>
+<p>PairFactory2.sol</p>
+<pre><code class="language-pragma">import &quot;./Pair.sol&quot;;
+
+contract PairFactory2{
+        mapping(address =&gt; mapping(address =&gt; address)) public getPair; // 通过两个代币地址查Pair地址
+        address[] public allPairs; // 保存所有Pair地址
+
+        function createPair2(address tokenA, address tokenB) external returns (address pairAddr) {
+            // 计算用tokenA和tokenB地址计算salt
+            (address token0, address token1) = tokenA &lt; tokenB ? (tokenA, tokenB) : (tokenB, tokenA); //将tokenA和tokenB按大小排序
+            bytes32 salt = keccak256(abi.encodePacked(token0, token1));
+            // 用create2部署新合约
+            Pair pair = new Pair{salt: salt}(); 
+            // 调用新合约的initialize方法
+            pair.initialize(tokenA, tokenB);
+            // 更新地址map
+            pairAddr = address(pair);
+            allPairs.push(pairAddr);
+            getPair[tokenA][tokenB] = pairAddr;
+            getPair[tokenB][tokenA] = pairAddr;
+        }
+
+// 提前计算pair合约地址
+function calculateAddr(address tokenA, address tokenB) public view returns(address predictedAddress){
+    // 计算用tokenA和tokenB地址计算salt
+    (address token0, address token1) = tokenA &lt; tokenB ? (tokenA, tokenB) : (tokenB, tokenA); //将tokenA和tokenB按大小排序
+    bytes32 salt = keccak256(abi.encodePacked(token0, token1));
+    // 计算合约地址方法 hash()
+    predictedAddress = address(uint160(uint(keccak256(abi.encodePacked(
+        bytes1(0xff),
+        address(this),
+        salt,
+        keccak256(type(Pair).creationCode)
+    )))));
+}
+
+}
+</code></pre>
+<p>对比计算出的合约地址和create2创建出来的合约地址：<br>
+<img src="https://s2.loli.net/2022/05/25/1i9wPnAUfuRE7cX.png" alt="微信图片_20220525010322.png" loading="lazy"></p>
+<h1 id="create2的实际应用场景">create2的实际应用场景</h1>
+<p>1.交易所为新用户预留创建钱包合约地址。<br>
+2.由 CREATE2 驱动的 factory 合约，在uniswapV2中交易对的创建是在 Factory中调用create2完成。这样做的好处是: 它可以得到一个确定的pair地址, 使得 Router中就可以通过 tokenA, tokenB 计算出pair地址, 不再需要执行一次 Factory.getPair(tokenA, tokenB) 的跨合约调用。</p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://tangminjie.github.io/tag/nEjwCuZ71/" class="tag">
+                    solidity
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://tangminjie.github.io/post/erc-777/">
+                  <h3 class="post-title">
+                    ERC-777
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
