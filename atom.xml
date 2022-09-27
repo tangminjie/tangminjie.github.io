@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://tangminjie.github.io</id>
     <title>Tangminjie&apos;s Blog</title>
-    <updated>2022-08-04T08:18:49.601Z</updated>
+    <updated>2022-09-27T08:41:29.941Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://tangminjie.github.io"/>
     <link rel="self" href="https://tangminjie.github.io/atom.xml"/>
@@ -248,6 +248,10 @@ https://learnblockchain.cn/video/play/300</p>
 https://mirrorbeats.xyz/</p>
 <p><strong>freecodecamp视频课</strong><br>
 https://www.freecodecamp.org/news/learn-solidity-blockchain-and-smart-contracts-in-a-free/</p>
+<p>Secureum 训练营<br>
+https://ventral.digital/posts/2021/10/30/secureum-bootcamp-solidity-201-quiz</p>
+<p>合约升级相关<br>
+https://blog.openzeppelin.com/the-state-of-smart-contract-upgrades/</p>
 ]]></content>
     </entry>
     <entry>
