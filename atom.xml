@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://tangminjie.github.io</id>
     <title>Tangminjie&apos;s Blog</title>
-    <updated>2022-10-11T18:12:22.656Z</updated>
+    <updated>2022-10-20T17:33:56.182Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://tangminjie.github.io"/>
     <link rel="self" href="https://tangminjie.github.io/atom.xml"/>
@@ -10,6 +10,338 @@
     <logo>https://tangminjie.github.io/images/avatar.png</logo>
     <icon>https://tangminjie.github.io/favicon.ico</icon>
     <rights>All rights reserved 2022, Tangminjie&apos;s Blog</rights>
+    <entry>
+        <title type="html"><![CDATA[Hardhat 学习笔记]]></title>
+        <id>https://tangminjie.github.io/post/hardhat-xue-xi-bi-ji/</id>
+        <link href="https://tangminjie.github.io/post/hardhat-xue-xi-bi-ji/">
+        </link>
+        <updated>2022-10-20T16:50:46.000Z</updated>
+        <content type="html"><![CDATA[<h1 id="入门">入门</h1>
+<h2 id="安装">安装</h2>
+<pre><code>```
+npm install --save-dev hardhat
+
+npx hardhat
+```
+</code></pre>
+<h2 id="编译合约">编译合约</h2>
+<pre><code>```npx hardhat compile```
+</code></pre>
+<h2 id="部署合约">部署合约</h2>
+<ol>
+<li>编写js代码<pre><code>const Token = await ethers.getContractFactory(&quot;合约名&quot;);// 
+    const hardhatToken = await Token.deploy();
+    await hardhatToken.deployed();
+    // 接下来可以直接调用合约方法 获取余额
+    const ownerBalance = await hardhatToken.balanceOf(address);
+</code></pre>
+</li>
+<li>执行js代码<pre><code>// node js文件路径
+node scripts/index.js
+</code></pre>
+</li>
+</ol>
+<h2 id="常用操作">常用操作</h2>
+<h3 id="fork主网">fork主网</h3>
+<ol>
+<li>命令的形式<pre><code>// fork eth链
+// npx hardhat node --fork 地址
+npx hardhat node --fork https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161
+
+// fork指定块高度（锁定区块）
+// npx hardhat node --fork 地址 --fork-block-number 块高度
+npx hardhat node --fork https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161 --fork-block-number 115445
+</code></pre>
+</li>
+<li>配置hardhat.config.js<pre><code>networks: {
+    hardhat: {
+    forking: {
+        url: &quot;https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161&quot;, // okChain
+        // blockNumber: 5115288, //指定fork的块高度(锁定区块)
+    },
+    }
+},
+</code></pre>
+</li>
+</ol>
+<h3 id="重置fork">重置Fork</h3>
+<p>你可以在运行时里操作Fork，如重置回全新的Fork状态、从另一个区块号Fork，或者通过调用hardhat_reset禁用Fork:</p>
+<ol>
+<li>重新fork<pre><code>await network.provider.request({
+method: &quot;hardhat_reset&quot;,
+params: [{
+    forking: {
+    jsonRpcUrl: &quot;https://eth-mainnet.alchemyapi.io/v2/&lt;key&gt;&quot;,
+    blockNumber: 11095000
+    }
+}]
+})
+</code></pre>
+</li>
+<li>禁用fork<pre><code>await network.provider.request({
+method: &quot;hardhat_reset&quot;,
+params: []
+}) 
+</code></pre>
+</li>
+</ol>
+<h2 id="挖矿">挖矿</h2>
+<ol>
+<li>
+<p>禁用挖矿</p>
+<pre><code>async function f6() {
+await hardhat.network.provider.send(&quot;evm_setAutomine&quot;, [false]);
+}
+f6()
+</code></pre>
+</li>
+<li>
+<p>启用区间挖掘<br>
+<code>await network.provider.send(&quot;evm_setIntervalMining&quot;, [5000]);</code></p>
+</li>
+<li>
+<p>手动挖矿<br>
+在hardhat.config.js没有配置手动挖矿 或 当自动挖矿被禁用时，可以执行手动挖矿（没有被禁用一样可以执行手动）</p>
+<pre><code>    async function f8() {
+await hardhat.network.provider.request({
+    method: &quot;evm_mine&quot;,
+});
+}
+f8()
+</code></pre>
+</li>
+</ol>
+<h3 id="获取pending中的交易列表">获取pending中的交易列表</h3>
+<p>可以先禁用挖矿，再获取pending列表<br>
+<code>const pendingBlock = await network.provider.send(&quot;eth_getBlockByNumber&quot;, [ &quot;pending&quot;, false, ]);</code></p>
+<h3 id="删除和替换交易-hardhat_droptransaction">删除和替换交易 hardhat_dropTransaction</h3>
+<ol>
+<li>删除交易<pre><code>const txHash = &quot;0xabc...&quot;;
+await network.provider.send(&quot;hardhat_dropTransaction&quot;, [txHash]);
+</code></pre>
+</li>
+<li>替换交易 直接发起一个交易，指定的交易的哈希为你先覆盖的哈希即可，就像在 Geth 中一样，新的 gas/fees 价格必须至少比当前交易的 gas 价格高 10%</li>
+</ol>
+<h3 id="设置下一个块的时间戳">设置下一个块的时间戳</h3>
+<pre><code>```
+const hardhat = require(&quot;hardhat&quot;);
+
+hardhat.network.provider.request({
+method: &quot;evm_setNextBlockTimestamp&quot;,
+params: [1640966400],
+});
+```
+** 1640966400为你要设置的时间戳 场景：比如到点才能claim **
+</code></pre>
+<h3 id="配置项-hardhatconfigjs">配置项 hardhat.config.js</h3>
+<pre><code>  networks: {
+    hardhat: {
+	chainId: 31337,//默认链id
+	from: account,//默认账户
+	gas: 'auto'|'3000',// gas费，auto自动或者一个具体的数值
+	gasPrice: 'auto'|'3000', // 类似gas
+	gasMultiplier: '1',用于乘以气体估计结果的数字,默认值1
+	accounts: { // 此字段可以配置为以下之一
+	  mnemonic: //助记池 BIP39 定义的 12 或 24 个单词的助记词。默认值：&quot;test test test test test test test test test test test junk&quot;
+	  initialIndex: // 要派生的初始索引。默认值：0
+	  path：所有派生密钥的 HD 父级。默认值：&quot;m/44'/60'/0'/0&quot;。
+	  count: 20,要派生的帐户数。默认值：20。
+	  accountsBalance: 分配给每个派生帐户的余额（以 wei 为单位）的字符串。默认值：&quot;10000000000000000000000&quot;（10000 ETH）
+	  },
+	blockGasLimit: gas 限制。默认值：30000000 (3gwei)
+	minGasPrice: 最低 gas 价格,默认0we
+	hardfork: 这个设置改变了安全帽网络的工作方式，在给定的硬分叉上模仿以太坊的主网。它必须是一个&quot;byzantium&quot;，&quot;constantinople&quot;，&quot;petersburg&quot;，&quot;istanbul&quot;，&quot;muirGlacier&quot;，&quot;berlin&quot;和&quot;london&quot;。默认值：&quot;london&quot;
+	throwOnTransactionFailures：控制安全帽网络是否引发交易失败的布尔值。如果此值为true，Hardhat Network 将在事务失败时抛出组合的 JavaScript 和 Solidity 堆栈跟踪。如果是false，它将返回失败的交易哈希。在这两种情况下，交易都被添加到区块链中。默认值：true
+	throwOnCallFailures：一个布尔值，用于控制 Hardhat Network 是否在调用失败时引发。如果此值为true，Hardhat Network 将在调用失败时抛出组合的 JavaScript 和 Solidity 堆栈跟踪。如果是false，它将返回调用的return data，其中可以包含还原原因。默认值：true
+	loggingEnabled：控制安全帽网络是否记录每个请求的布尔值。默认值：false对于进程内 Hardhat Network 提供者，true对于 Hardhat Network 支持的 JSON-RPC 服务器（即node任务）。
+	initialDate：设置区块链日期的可选字符串。有效值是Javascript 的日期时间字符串。默认值：如果不分叉另一个网络，则为当前日期和时间。当分叉另一个网络时，使用您分叉的区块的时间戳加上一秒。
+	allowUnlimitedContractSize：一个可选的布尔值，禁用EIP 170强加的合约大小限制。默认值：false
+	forking: {描述分叉配置的对象，可以具有以下字段：
+	  url: 指向具有要分叉的状态的 JSON-RPC 节点的 URL。此字段没有默认值。必须为前叉提供它才能工作。
+	  blockNumber：一个可选数字，用于固定要从哪个块中分叉。如果未提供值，则使用最新的块。
+	  enabled: 一个可选的布尔值，用于打开或关闭 fork 功能。默认值：true如果url设置，false否则。
+	}
+	minGasPrice：gasPrice交易必须具有的最小值。如果&quot;hardfork&quot;是&quot;london&quot;或以后的，则此字段不得存在。默认值：&quot;0&quot;。
+	initialBaseFeePerGas: 第baseFeePerGas一个块的。请注意，在分叉远程网络时，“第一个块”是您分叉的块之后的那个。此字段必须不存在，如果&quot;hardfork&quot;不是&quot;london&quot;或更高之一。默认值：&quot;1000000000&quot;如果不分叉。在 fork 远程网络时，如果远程网络使用 EIP-1559，则第一个本地块将baseFeePerGas根据 EIP使用权限，否则&quot;10000000000&quot;使用
+	}
+  }
+</code></pre>
+<h2 id="evm方法">EVM方法</h2>
+<p>方法具体解析可以看以太坊虚拟机官方API说明 ethereum-json-rpc-api</p>
+<h3 id="标准方法">标准方法</h3>
+<ol>
+<li>eth_accounts 返回主账户，这个账户是在hardhat.config.js配置的私钥的账户地址</li>
+<li>eth_blockNumber 返回当前块高度</li>
+<li>eth_call<br>
+立刻执行一个新的消息调用<pre><code>    参数
+    Object - 交易调用对象
+
+    from: DATA, 20 Bytes - 发送交易的原地址，可选
+    to: DATA, 20 Bytes - 交易目标地址
+    gas: QUANTITY - 交易可用gas量，可选。eth_call不消耗gas，但是某些执行环节需要这个参数
+    gasPrice: QUANTITY - gas价格，可选
+    value: QUANTITY - 交易发送的以太数量，可选
+    data: DATA - 方法签名和编码参数的哈希，可选
+    QUANTITY|TAG - 整数块编号，或字符串&quot;latest&quot;、&quot;earliest&quot;或&quot;pending&quot;
+</code></pre>
+</li>
+<li>eth_chainId 返回当前链id</li>
+<li>eth_coinbase 返回接收挖矿回报的账户地址</li>
+<li>eth_estimateGas 返回估计调用需要耗费的gas量</li>
+<li>eth_gasPrice 返回当前的gas价格</li>
+<li>eth_getBalance 获取指定账户余额</li>
+<li>eth_getBlockByHash 返回具有指定哈希的块<pre><code>    params: [
+hash,
+true//为true时返回完整的交易对象，否则仅返回交易哈希
+]
+</code></pre>
+</li>
+<li>eth_getBlockByNumber 返回指定编号的块。<pre><code>params: [
+'0x1b4', // 整数块编号，或字符串&quot;earliest&quot;、&quot;latest&quot; 或&quot;pending&quot;
+true// 为true时返回完整的交易对象，否则仅返回交易哈希
+]
+</code></pre>
+</li>
+<li>eth_getBlockTransactionCountByHash 返回指定块内的交易数量，使用哈希来指定块<pre><code>    params: [
+hash
+]
+</code></pre>
+</li>
+<li>eth_getBlockTransactionCountByNumber 返回指定块内的交易数量，使用块编号指定块<pre><code>    params: [
+'0xe8', // 232
+]
+</code></pre>
+</li>
+<li>eth_getCode 返回指定地址的代码<pre><code>    params: [
+address,
+'0x2'  //整数块编号，或字符串&quot;latest&quot;、&quot;earliest&quot; 或&quot;pending&quot;
+]
+</code></pre>
+</li>
+<li>如何调用<pre><code>    const hardhat = require(&quot;hardhat&quot;);
+
+hardhat.network.provider.request({
+method: 方法名,
+params: [参数],
+});
+</code></pre>
+</li>
+</ol>
+<h2 id="hardhat-方法">Hardhat 方法</h2>
+<ol>
+<li>hardhat_addCompilationResult 添加有关已编译合同的信息</li>
+<li>hardhat_dropTransaction 从内存池中删除交易</li>
+<li>hardhat_impersonateAccount 模拟账户<pre><code>    async function f1(){
+await hardhat.network.provider.request({
+    method: &quot;hardhat_impersonateAccount&quot;,
+    params: [被模拟的账户],
+});
+const signer = await ethers.provider.getSigner(被模拟的账户)
+// 用模拟的账户给指定账户转账
+await signer.sendTransaction({
+    to: &quot;0x23FCB0E1DDbC821Bd26D5429BA13B7D5c96C0DE0&quot;,
+    value: ethers.utils.parseEther(&quot;1.0&quot;),
+});
+console.log('success')
+
+// 取消模拟
+await hardhat.network.provider.request({
+    method: &quot;hardhat_stopImpersonatingAccount&quot;,
+    params: [被模拟的账户],
+});
+}
+
+f1().then(() =&gt; process.exit(0))
+.catch((error) =&gt; {
+    console.error(error);
+    process.exit(1);
+});
+</code></pre>
+</li>
+<li>查询交易信息<pre><code>async function UnsignedTransaction(hash) {
+const data = await hardhat.ethers.provider.getTransaction(hash)
+console.log('data', data)
+}
+//UnsignedTransaction(交易hash)
+UnsignedTransaction('0xa475cf601cb72f4435b22cec9e622eaee1c98f4bd5fa39d1d7e0e69c3f5f62f5')
+</code></pre>
+</li>
+<li>修改账户余额<pre><code>async function f2(){
+await hardhat.network.provider.send(&quot;hardhat_setBalance&quot;, [
+    &quot;0x23FCB0E1DDbC821Bd26D5429BA13B7D5c96C0DE0&quot;,
+    Web3.utils.numberToHex(hardhat.ethers.utils.parseEther('123.12')),//十六进制,可以通过ethers.utils的转换接口
+]);
+}
+f2()
+</code></pre>
+</li>
+<li>Token转账<pre><code>// 代币转账
+async function f4(){
+// 合约部署
+const ERC20 = await ethers.getContractFactory(&quot;ERC20&quot;);
+let erc20 = await ERC20.deploy();
+erc20.deployed();
+const accounts =await ethers.getSigners();
+
+const beforeBalance = await erc20.balanceOf(accounts[1].address)
+// 设置转账数量
+const amount = ethers.utils.parseEther('10')
+// 广播交易
+const tx = await erc20.transfer(accounts[1].address, amount)
+// 等待交易上链
+await tx.wait()
+// 查询目标地址余额
+const afterBalance = await erc20.balanceOf(accounts[1].address)
+
+console.log('转帐前', beforeBalance.toString())
+console.log('转帐后', afterBalance.toString())
+
+}
+f4()
+</code></pre>
+</li>
+<li>ETH转账<pre><code>// 代币转账
+async function f5(){
+const [owner] = await ethers.getSigners();
+await owner.sendTransaction({
+    from: owner.address,
+    to: &quot;0xD528d6B7ff1f46417a7A7b2f2869Fe0CC8e9ed67&quot;,
+    value: ethers.utils.parseEther(&quot;1.2&quot;),
+});
+// 查询目标地址余额
+const balance = await hardhat.ethers.provider.getBalance('0xD528d6B7ff1f46417a7A7b2f2869Fe0CC8e9ed67')
+console.log(balance.toString())
+}
+f5()
+</code></pre>
+</li>
+<li>常见单位转换<pre><code>// gas转换 num2wei
+hardhat.ethers.utils.parseUnits('300', 'gwei'),
+
+// ether转换 num2wei
+hardhat.ethers.utils.parseEther('1')
+
+// num 2 16hex
+Web3.utils.numberToHex('1')
+ethers.utils.hexValue(1)
+</code></pre>
+</li>
+</ol>
+<h3 id="编译配置">编译配置</h3>
+<pre><code>     solidity: {
+    compilers: [
+    {
+    version: &quot;0.5.1&quot;, // 编译器版本
+    settings: {
+    optimizer: {
+    enabled: true,
+    runs: 200
+    }
+    },
+    ...其他配置
+</code></pre>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[WEB3 求职网站]]></title>
         <id>https://tangminjie.github.io/post/web3-qiu-zhi-wang-zhan/</id>
@@ -1043,380 +1375,6 @@ function calculateAddr(address tokenA, address tokenB) public view returns(addre
 <h1 id="create2的实际应用场景">create2的实际应用场景</h1>
 <p>1.交易所为新用户预留创建钱包合约地址。<br>
 2.由 CREATE2 驱动的 factory 合约，在uniswapV2中交易对的创建是在 Factory中调用create2完成。这样做的好处是: 它可以得到一个确定的pair地址, 使得 Router中就可以通过 tokenA, tokenB 计算出pair地址, 不再需要执行一次 Factory.getPair(tokenA, tokenB) 的跨合约调用。</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[ERC-777]]></title>
-        <id>https://tangminjie.github.io/post/erc-777/</id>
-        <link href="https://tangminjie.github.io/post/erc-777/">
-        </link>
-        <updated>2022-04-23T09:18:08.000Z</updated>
-        <content type="html"><![CDATA[<p>ERC-777 是一个易于交易的通证标准，可改进现有的 ERC-20 标准。<br>
-对于ERC-20协议标准存在以下缺陷：<br>
-1.对于payable 合约接受转账没办法再合约里记录是谁发过来多少币。<br>
-2.由于ERC20 标准没有一个转账通知机制，很多ERC20代币误转到合约之后，再也没有办法把币转移出来，已经有大量的ERC20 因为这个原因被锁死。<br>
-3.ERC20 转账时，无法携带额外的信息。<br>
-当然对于使用ERC-20开发的defi业务。我们可以通过采用两个交易组合完成。方法是：第1步：先让用户把要转移的金额用 ERC20 的approve 授权的存币的合约（这步通常称为解锁），第2步：再次让用户调用存币合约的函数，合约中使用mapping来记录转入的代币数量和转入地址。通过 transferFrom 把代币从用户手里转移的合约内。<br>
-ERC777很好的解决了这些问题，同时ERC777 也兼容 ERC20 标准。<br>
-ERC777 在 ERC20的基础上定义了 send(dest, value, data) 来转移代币， send函数额外的参数用来携带其他的信息，send函数会检查持有者和接收者是否实现了相应的钩子函数，如果有实现（不管是普通用户地址还是合约地址都可以实现钩子函数），则调用相应的钩子函数。</p>
-<h1 id="erc1820-接口注册表合约">ERC1820 接口注册表合约</h1>
-<p>即便是一个普通用户地址，同样可以实现对 ERC777 转账的监听， 听起来有点神奇，其实这是通过 ERC1820 接口注册表合约来是实现的。RC1820标准定义了一个通用注册表合约，任何地址（合约或普通用户帐户）都可以注册它支持的接口以及哪个智能合约负责接口实现。并且任何人都可以查询此注册表，询问哪个地址是否实现了给定的接口以及哪个智能合约处理实现逻辑。<br>
-ERC1820注册表合约可以部署在任何链上，并在所有链上的地址是相同的。有一个唯一在以太坊链上都相同的合约地址，它总是0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24。接口的后28个字节都为0的话，会认为是 ERC165 接口，并且注册表将转发到合约以查看是否实现了接口。此合约还充当 ERC165 缓存，以减少 gas 消耗。<br>
-ERC1820合约提过了两个主要接口：</p>
-<pre><code class="language-setInterfaceImplementer(address">用来设置地址（_addr）的接口（_interfaceHash 接口名称的 keccak256 ）由哪个合约实现（_implementer）。
-getInterfaceImplementer(address _addr, bytes32 _interfaceHash) external view returns (address)
-这个函数用来查询地址（_addr）的接口由哪个合约实现。
-</code></pre>
-<p>setInterfaceImplementer函数会参数信息记录到下面这个interfaces映射里：</p>
-<pre><code class="language-//">mapping(address =&gt; mapping(bytes32 =&gt; address)) interfaces;
-</code></pre>
-<p>相对应的 getInterfaceImplementer() 通过 interfaces 这个mapping 来获得接口的实现。<br>
-ERC777 使用 send转账时会分别在持有者和接收者地址上使用ERC1820 的getInterfaceImplementer函数进行查询，查看是否有对应的实现合约，ERC777 标准规范里预定了接口及函数名称，如果有实现则进行相应的调用。</p>
-<h1 id="erc777-标准规范">ERC777 标准规范</h1>
-<h2 id="erc777-接口">ERC777 接口</h2>
-<p>ERC777 为了在实现上可以兼容ERC20，除了查询函数和ERC20一致外，操作接口均采用的独立的命名（避免相同的命令无法分辨是哪个标准），ERC777的接口定义如下，要求所有的ERC777代币合约都必须实现这些接口：</p>
-<pre><code class="language-interface">    function name() external view returns (string memory);
-    function symbol() external view returns (string memory);
-    function totalSupply() external view returns (uint256);
-    function balanceOf(address holder) external view returns (uint256);
-
-    // 定义代币最小的划分粒度
-    function granularity() external view returns (uint256);
-
-    // 操作员 相关的操作（操作员是可以代表持有者发送和销毁代币的账号地址）
-    function defaultOperators() external view returns (address[] memory);
-    function isOperatorFor(
-        address operator,
-        address holder
-    ) external view returns (bool);
-    function authorizeOperator(address operator) external;
-    function revokeOperator(address operator) external;
-
-    // 发送代币
-    function send(address to, uint256 amount, bytes calldata data) external;
-    function operatorSend(
-        address from,
-        address to,
-        uint256 amount,
-        bytes calldata data,
-        bytes calldata operatorData
-    ) external;
-
-    // 销毁代币
-    function burn(uint256 amount, bytes calldata data) external;
-    function operatorBurn(
-        address from,
-        uint256 amount,
-        bytes calldata data,
-        bytes calldata operatorData
-    ) external;
-
-    // 发送代币事件
-    event Sent(
-        address indexed operator,
-        address indexed from,
-        address indexed to,
-        uint256 amount,
-        bytes data,
-        bytes operatorData
-    );
-
-    // 铸币事件
-    event Minted(
-        address indexed operator,
-        address indexed to,
-        uint256 amount,
-        bytes data,
-        bytes operatorData
-    );
-
-    // 销毁代币事件
-    event Burned(
-        address indexed operator,
-        address indexed from,
-        uint256 amount,
-        bytes data,
-        bytes operatorData
-    );
-
-    // 授权操作员事件
-    event AuthorizedOperator(
-        address indexed operator,
-        address indexed holder
-    );
-
-    // 撤销操作员事件
-    event RevokedOperator(address indexed operator, address indexed holder);
-}
-</code></pre>
-<h2 id="接口说明与实现约定">接口说明与实现约定</h2>
-<p>ERC777 合约必须要通过 ERC1820 注册 ERC777Token 接口，这样任何人都可以查询合约是否是ERC777标准的合约，注册方法是: 调用ERC1820 注册合约的 setInterfaceImplementer 方法，参数 _addr 及 _implementer 均是合约的地址，_interfaceHash 是 ERC777Token 的 keccak256 哈希值（0xac7fbab5...177054）<br>
-如果 ERC777 要实现ERC20标准，还必须通过ERC1820 注册ERC20Token接口。</p>
-<h2 id="erc777-信息说明函数">ERC777 信息说明函数</h2>
-<p>name()，symbol()，totalSupply()，balanceOf(address) 和含义和在ERC20 中完全一样。<br>
-granularity() 用来定义代币最小的划分粒度（&gt;=1）， 要求必须在创建时设定，之后不可以更改，不管是在铸币、发送还是销毁操作的代币数量，必需是粒度的整数倍。</p>
-<pre><code class="language-granularity"></code></pre>
-<h2 id="操作员">操作员</h2>
-<p>ERC777 定义了一个新的操作员角色，操作员被作为移动代币的地址。 每个地址直观地移动自己的代币，将持有人和操作员的概念分开可以提供更大的灵活性。此外，ERC777还可以定义默认操作员（默认操作员列表只能在代币创建时定义的，并且不能更改），默认操作员是被所有持有人授权的操作员，这可以为项目方管理代币带来方便，当然认何持有人仍然有权撤销默认操作员。<br>
-<code>与ERC20中的 approve 、 transferFrom 不同，其未明确定义批准地址的角色。</code></p>
-<h3 id="操作员相关的函数">操作员相关的函数</h3>
-<p>1.defaultOperators(): 获取代币合约默认的操作员列表.<br>
-2.authorizeOperator(address operator): 设置一个地址作为msg.sender 的操作员，需要触发AuthorizedOperator事件。<br>
-3.revokeOperator(address operator): 移除 msg.sender 上 operator 操作员的权限， 需要触发RevokedOperator事件。<br>
-4.isOperatorFor(address operator, address holder)： 是否是某个持有者的操作员。</p>
-<h2 id="发送代币">发送代币</h2>
-<p>ERC777 发送代币 使用以下两个方法：</p>
-<pre><code class="language-send(address">
-function operatorSend(
-    address from,
-    address to,
-    uint256 amount,
-    bytes calldata data,
-    bytes calldata operatorData
-) external
-</code></pre>
-<p>operatorSend 可以通过参数operatorData携带操作者的信息，发送代币除了执行对应账户的余额加减和触发事件之外，还有额外的规定：<br>
-1.如果持有者有通过 ERC1820 注册 ERC777TokensSender 实现接口， 代币合约必须调用其 tokensToSend 钩子函数。<br>
-2.如果接收者有通过 ERC1820 注册 ERC777TokensRecipient 实现接口， 代币合约必须调用其 tokensReceived 钩子函数。<br>
-3.如果有 tokensToSend 钩子函数，必须在修改余额状态之前调用。<br>
-4.如果有 tokensReceived 钩子函数，必须在修改余额状态之后调用。<br>
-5.调用钩子函数及触发事件时， data 和 operatorData必须原样传递，因为 tokensToSend 和 tokensReceived 函数可能根据这个数据取消转账（触发 revert）。<br>
-6.其中data和operatorData都属于calldata类型。一般只有外部函数的参数（不包括返回参数）被强制指定为calldata。这种数据位置是只读的，不会持久化到区块链。</p>
-<h2 id="erc777tokenssender-接口定义">ERC777TokensSender 接口定义</h2>
-<p>如果持有者希望在转账时收到代币转移通知，就需要在ERC1820合约上注册及实现 ERC777TokensSender 接口。有一个地方需要注意: 对于所有的 ERC777 合约， 一个持有者地址只能注册一个ERC777TokensSender接口实现。因此 ERC777TokensSender 实现会被多个ERC777合约调用，在ERC777TokensSender接口的实现合约里， msg.sender 是ERC777合约地址，而不是操作者。</p>
-<pre><code class="language-interface">    function tokensToSend(
-        address operator,
-        address from,
-        address to,
-        uint256 amount,
-        bytes calldata userData,
-        bytes calldata operatorData
-    ) external;
-}
-</code></pre>
-<h2 id="erc777tokensrecipient-接口定义">ERC777TokensRecipient 接口定义</h2>
-<p>如果接收者希望在转账时收到代币转移通知，就需要在ERC1820合约上注册及实现 ERC777TokensRecipient 接口。<br>
-如果接收者是一个合约地址， 则必须要注册及实现 ERC777TokensRecipient 接口（这样可以防止代币被锁死），如果没有实现，ERC777代币合约必须revert 回退交易状态。</p>
-<pre><code class="language-interface">    function tokensReceived(
-        address operator,
-        address from,
-        address to,
-        uint256 amount,
-        bytes calldata data,
-        bytes calldata operatorData
-    ) external;
-}
-</code></pre>
-<h1 id="铸币与销毁">铸币与销毁</h1>
-<p>铸币（挖矿）是产生新币的过程，销毁代币则相反，在ERC20 中，没有明确定义这两个行为，通常会transfer方法和Transfer事件来表达。<br>
-ERC777 则定义了代币从铸币、转移到销毁的整个生命周期。<br>
-ERC777 没有定义铸币的方法名，只定义了 Minted事件，因为很多代币，是在创建的时候就确定好代币的数量。<br>
-如果有需要合约可以自己定义铸币函数，铸币函数在实现时要求：<br>
-1.必须触发Burned事件。<br>
-2.总供应量必须减少代币销毁量， 持有者的余额必须减少代币销毁的数量。<br>
-3.如果持有者通过ERC1820注册ERC777TokensSender 实现，必须调用持有者的tokensToSend钩子函数。</p>
-<h1 id="erc777-代币实现">ERC777 代币实现</h1>
-<p>OpenZeppelin 实现了一个 ERC777 基础合约，要实现自己的ERC777代币只需要继承 OpenZeppelin ERC777。<br>
-实现主要是两步：通过基类ERC777的构造函数确认代币名称、代号以及默认操作员（可为空），然后调用 _mint 初始化发行量，注意发行量的小数位是固定的18位（和ether保持一致），在合约内部是按小数位保存的，因此发行的币数需要乘上10^18。</p>
-<pre><code class="language-import">
-contract MyERC777 is ERC777 {
-    constructor(
-        address[] memory defaultOperators
-    )
-        ERC777(&quot;MyERC777&quot;, &quot;LBC7&quot;, defaultOperators)
-        public
-    {
-        uint initialSupply = 2100 * 10 ** 18;
-        _mint(msg.sender, msg.sender, initialSupply, &quot;&quot;, &quot;&quot;);
-    }
-}
-</code></pre>
-<h1 id="监听代币收款">监听代币收款</h1>
-<p>如果我们要为一个合约监听它的代币接受。我们可以在合约种继承IERC777Recipient来实现钩子函数：<br>
-其中要注意：<br>
-1.实例IERC1820Registry合约地址是一个唯一地址，全网统一。<br>
-2.TOKENS_RECIPIENT_INTERFACE_HASH是ERC777TokensRecipient的哈希值，是一个固定值。<br>
-3.setInterfaceImplementer设置回调的时候第一个地址为监听地址。第二个为监听合约实现地址。<br>
-在回调种我们可以对转账进行记录或者处理账本或者黑白名单等操作。</p>
-<pre><code class="language-import">import &quot;@openzeppelin/contracts/token/ERC777/IERC777.sol&quot;;
-import &quot;@openzeppelin/contracts/introspection/IERC1820Registry.sol&quot;;
-
-contract Merit is IERC777Recipient {
-
-  mapping(address =&gt; uint) public givers;
-  address _owner;
-  IERC777 _token;
-
-  IERC1820Registry private _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
-
-  // keccak256(&quot;ERC777TokensRecipient&quot;)
-  bytes32 constant private TOKENS_RECIPIENT_INTERFACE_HASH =
-      0xb281fc8c12954d22544db45de3159a39272895b169a852b314f9cc762e44c53b;
-
-  constructor(IERC777 token) public {
-    _erc1820.setInterfaceImplementer(address(this), TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
-    _owner = msg.sender;
-    _token = token;
-  }
-
-// 收款时被回调
-  function tokensReceived(
-      address operator,
-      address from,
-      address to,
-      uint amount,
-      bytes calldata userData,
-      bytes calldata operatorData
-  ) external {
-    givers[from] += amount;
-  }
-  }
-</code></pre>
-<h1 id="普通账户地址监听代币转出">普通账户地址监听代币转出</h1>
-<p>当然我们除了为合约地址监听代币转入转出以外，也可以为账户地址来监听代币转出。监听代币的转出可以让持有者对发出去的代币有更多的控制，例如持有者可以设置一些黑名单，禁止操作员对黑名单内账号转账。<br>
-根据 ERC1820 标准，只有账号的管理者才可以为账号注册接口实现合约，<br>
-如果一个合约要为某个地址（或自身）实现某个接口， 则需要实现下面这个接口:</p>
-<pre><code class="language-interface">    /// @notice 指示合约是否为地址 “addr” 实现接口 “interfaceHash”。
-    /// @param interfaceHash 接口名称的 keccak256 哈希值
-    /// @param addr 为哪一个地址实现接口
-    /// @return 只有当合约为地址'addr'实现'interfaceHash'时返回 ERC1820_ACCEPT_MAGIC
-    function canImplementInterfaceForAddress(bytes32 interfaceHash, address addr) external view returns(bytes32);
-}
-</code></pre>
-<p>通过在 canImplementInterfaceForAddress 返回 ERC1820_ACCEPT_MAGIC 以声明实现了 interfaceHash 对应的接口。在调用ERC1820的 setInterfaceImplementer 函数设置接口实现时，会通过 canImplementInterfaceForAddress 检查合约时候实现了接口。</p>
-<pre><code class="language-import">import &quot;@openzeppelin/contracts/token/ERC777/IERC777.sol&quot;;
-import &quot;@openzeppelin/contracts/introspection/IERC1820Registry.sol&quot;;
-import &quot;@openzeppelin/contracts/introspection/IERC1820Implementer.sol&quot;;
-
-
-contract SenderControl is IERC777Sender, IERC1820Implementer {
-
-  IERC1820Registry private _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
-  bytes32 constant private ERC1820_ACCEPT_MAGIC = keccak256(abi.encodePacked(&quot;ERC1820_ACCEPT_MAGIC&quot;));
-
-  //    keccak256(&quot;ERC777TokensSender&quot;)
-  bytes32 constant private TOKENS_SENDER_INTERFACE_HASH =
-        0x29ddb589b1fb5fc7cf394961c1adf5f8c6454761adf795e67fe149f658abe895;
-
-  mapping(address =&gt; bool) blacklist;
-  address _owner;
-
-  constructor() public {
-    _owner = msg.sender;
-  }
-
-function setInterfaceImp(address userAddress) public {
-_erc1820.setInterfaceImplementer(userAddress, TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
-}
-
-  //  account call erc1820.setInterfaceImplementer
-  function canImplementInterfaceForAddress(bytes32 interfaceHash, address account) external view returns (bytes32) {
-    if (interfaceHash == TOKENS_SENDER_INTERFACE_HASH) {
-      return ERC1820_ACCEPT_MAGIC;
-    } else {
-      return bytes32(0x00);
-    }
-  }
-
-  function setBlack(address account, bool b) external {
-    require(msg.sender == _owner, &quot;no premission&quot;);
-    blacklist[account] = b;
-  }
-
-  function tokensToSend(
-      address operator,
-      address from,
-      address to,
-      uint amount,
-      bytes calldata userData,
-      bytes calldata operatorData
-  ) external {
-    if (blacklist[to]) {
-      revert(&quot;ohh... on blacklist&quot;);
-    }
-  }
-
-}
-</code></pre>
-<p>给发送者账号(假设为A）设置代理合约的方法为：先部署代理合约，获得代理合约地址， 然后用A账号去调用 ERC1820 的 setInterfaceImplementer函数，参数分别是 A的地址、接口的 keccak256 即0x29ddb589b1fb5fc7cf394961c1adf5f8c6454761adf795e67fe149f658abe895 以及 代理合约地址。</p>
-<h1 id="openzeppelin-erc-777-源码分析">openzeppelin ERC-777 源码分析</h1>
-<p>在openzeppelin/constracts中erc-777主要有一下4个文件：<br>
-1.ERC777.sol: 协议具体的逻辑实现。<br>
-2.IERC777.sol: 对外提供的接口。<br>
-3.IERC777Recipient.sol：监听接受代币回调接口。<br>
-4.IERC777Sender.sol: 监听发送代币回调接口。<br>
-我们主要review一下 ERC777.sol：<br>
-首先ERC777继承了 IERC777 和 IERC20接口：<br>
-<code>contract ERC777 is Context, IERC777, IERC20 {</code><br>
-所以erc777 合约逻辑是完全兼容ERC20协议的。在ERC-20的基础上增加了以下属性：</p>
-<pre><code class="language-bytes32">    bytes32 private constant _TOKENS_RECIPIENT_INTERFACE_HASH = keccak256(&quot;ERC777TokensRecipient&quot;);
-
-    //操作员数组
-    address[] private _defaultOperatorsArray;
-
-    // 操作员权限映射
-    mapping(address =&gt; bool) private _defaultOperators;
-
-    //每个操作员地址对应的每个合约地址权限的映射，以及撤销的映射。
-    mapping(address =&gt; mapping(address =&gt; bool)) private _operators;
-    mapping(address =&gt; mapping(address =&gt; bool)) private _revokedDefaultOperators;
-</code></pre>
-<p>在构造函数中遍历默认操作员数组，并且将操作员权限初始化。然后向ERC1820合约注册&quot;ERC777&quot;和&quot;ERC20&quot;接口：</p>
-<pre><code class="language-constructor(">        string memory name_,
-        string memory symbol_,
-        address[] memory defaultOperators_
-    ) {
-        _name = name_;
-        _symbol = symbol_;
-
-        _defaultOperatorsArray = defaultOperators_;
-        for (uint256 i = 0; i &lt; defaultOperators_.length; i++) {
-            _defaultOperators[defaultOperators_[i]] = true;
-        }
-
-        // register interfaces
-        _ERC1820_REGISTRY.setInterfaceImplementer(address(this), keccak256(&quot;ERC777Token&quot;), address(this));
-        _ERC1820_REGISTRY.setInterfaceImplementer(address(this), keccak256(&quot;ERC20Token&quot;), address(this));
-    }
-</code></pre>
-<p>ERC-777保留了ERC-20的tranform函数，并且增加了_send 发送方法：</p>
-<pre><code class="language-function">        address from,
-        address to,
-        uint256 amount,
-        bytes memory userData,
-        bytes memory operatorData,
-        bool requireReceptionAck
-    ) internal virtual {
-        require(from != address(0), &quot;ERC777: send from the zero address&quot;);
-        require(to != address(0), &quot;ERC777: send to the zero address&quot;);
-
-        address operator = _msgSender();
-
-        _callTokensToSend(operator, from, to, amount, userData, operatorData);
-
-        _move(operator, from, to, amount, userData, operatorData);
-
-        _callTokensReceived(operator, from, to, amount, userData, operatorData, requireReceptionAck);
-    }
-    ```
-    在调用发送_move发送代币之前，调用了_callTokensToSend 用来回调注册的监听发送代币的回调函数。在发送代币之后调用了监听接受代币的回调函数。
-    _callTokensToSend和_callTokensReceived的实现类似：
-```    function _callTokensToSend(
-        address operator,
-        address from,
-        address to,
-        uint256 amount,
-        bytes memory userData,
-        bytes memory operatorData
-    ) private {
-        address implementer = _ERC1820_REGISTRY.getInterfaceImplementer(from, _TOKENS_SENDER_INTERFACE_HASH);
-        if (implementer != address(0)) {
-            IERC777Sender(implementer).tokensToSend(operator, from, to, amount, userData, operatorData);
-        }
-    }
-</code></pre>
-<p>首先通过_ERC1820_REGISTRY.getInterfaceImplementer向对应的地址获取是否注册了监听。并且调用相应地址的回调函数：<br>
-IERC777Sender(implementer).tokensToSend(operator, from, to, amount, userData, operatorData);</p>
 ]]></content>
     </entry>
 </feed>
