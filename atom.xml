@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://tangminjie.github.io</id>
     <title>Tangminjie&apos;s Blog</title>
-    <updated>2022-10-21T13:19:37.115Z</updated>
+    <updated>2022-11-16T12:23:04.242Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://tangminjie.github.io"/>
     <link rel="self" href="https://tangminjie.github.io/atom.xml"/>
@@ -586,6 +586,12 @@ https://ventral.digital/posts/2021/10/30/secureum-bootcamp-solidity-201-quiz</p>
 https://blog.openzeppelin.com/the-state-of-smart-contract-upgrades/</p>
 <p><strong>DeFi Hacks Analysis - Root Cause黑客攻击分析</strong><br>
 https://wooded-meter-1d8.notion.site/0e85e02c5ed34df3855ea9f3ca40f53b?v=22e5e2c506ef4caeb40b4f78e23517ee</p>
+<p><strong>最快速的编程语言学习网站</strong><br>
+https://learnxinyminutes.com/</p>
+<p><strong>MEV学习文章</strong><br>
+https://amberlabs.substack.com/p/extractable-value</p>
+<p><strong>各大高校计算机课程汇总</strong><br>
+https://studyhard.cf/</p>
 ]]></content>
     </entry>
     <entry>
