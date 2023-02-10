@@ -2,14 +2,38 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://tangminjie.github.io</id>
     <title>Tangminjie&apos;s Blog</title>
-    <updated>2022-11-17T10:41:16.227Z</updated>
+    <updated>2023-02-10T10:30:18.529Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://tangminjie.github.io"/>
     <link rel="self" href="https://tangminjie.github.io/atom.xml"/>
     <subtitle>个人技术博客，做好当下</subtitle>
     <logo>https://tangminjie.github.io/images/avatar.png</logo>
     <icon>https://tangminjie.github.io/favicon.ico</icon>
-    <rights>All rights reserved 2022, Tangminjie&apos;s Blog</rights>
+    <rights>All rights reserved 2023, Tangminjie&apos;s Blog</rights>
+    <entry>
+        <title type="html"><![CDATA[撸空投工具集合]]></title>
+        <id>https://tangminjie.github.io/post/--WKNkawg/</id>
+        <link href="https://tangminjie.github.io/post/--WKNkawg/">
+        </link>
+        <updated>2023-02-10T10:10:16.000Z</updated>
+        <content type="html"><![CDATA[<p>** 配置指纹浏览器：**<br>
+这里用的是Adspower，优点就是稳定，可配置的环境数（账号）更多，业内用的较多，缺点就是比较贵。配置方法都一样，就是把参数输入进去，主要是IP的参数要从渠道商那里获取。<br>
+传送门：<br>
+https://mirror.xyz/0x1890.eth/x-Z_KsGCDkZQngxU8tgGEW2zT1zqrrGo2XYx3B77rNQ</p>
+<p>** 独立IP购买渠道 **<br>
+拼团方式的话，各个博主都有建群，可以联系@Uncle_Simon25，私聊入群。他那边人数多，需要挨个拉。</p>
+<p>** 谷歌邮箱，DC,Twitter购买渠道 **<br>
+直接购买：<br>
+https://wuyoo.top/ 推特：2.8r Discord：1.5r 邮箱：3r</p>
+<p>https://www.lekafa.cn/links/FB8E9633 推特：3r Discord：2.5r http://www.zztka1.xyz/jingdian/index/henggoodbyname.html?key=tw 推特：3r Discord：2r 邮箱:3r</p>
+<p>接码平台：<br>
+https://sms-man.com/ 选择印度接码 推特：0.17U Discord：0.22U 邮箱：0.15U</p>
+<p>** 同步器下载及教程 **<br>
+以麒麟同步器为例<br>
+下载地址：http://xzy1y.ysepan.com/</p>
+<p>下载好以后我们需要注册卡才可以使用，去淘宝搜索麒麟同步器，月卡成本25r。</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Hardhat 学习笔记]]></title>
         <id>https://tangminjie.github.io/post/hardhat-xue-xi-bi-ji/</id>
@@ -1293,96 +1317,6 @@ bytes: 0x00000000000000000000000000000000000000000000000000000000000000200000000
 <h2 id="web3-abi-编码函数">Web3 ABI 编码函数</h2>
 <p>另一个web3提供相应的API，例如使用web3计算函数选择器的方式如下：<br>
 <code>web3.eth.abi.encodeFunctionSignature('myMethod(uint256,string)');</code></p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Create2的功能以及实际应用场景]]></title>
-        <id>https://tangminjie.github.io/post/create2-de-gong-neng-yi-ji-shi-ji-ying-yong-chang-jing/</id>
-        <link href="https://tangminjie.github.io/post/create2-de-gong-neng-yi-ji-shi-ji-ying-yong-chang-jing/">
-        </link>
-        <updated>2022-04-24T16:34:42.000Z</updated>
-        <content type="html"><![CDATA[<h1 id="create2的功能">Create2的功能</h1>
-<h2 id="creat和create2的区别">creat和create2的区别</h2>
-<p>使用Create在创建合约时，将根据创建合约的地址(通常为部署的钱包地址或者合约地址)和每次创建合约交易时的计数器(nonce)来计算合约的地址。nonce为(该地址发送交易的总数，对于合约账户每创建一个合约nonce+1)的哈希。<br>
-如果你指定了一个可选的 <code>salt</code>（一个bytes32值），那么合约创建将使用Create2的机制来生成新合约的地址。</p>
-<h2 id="create2功能说明">create2功能说明</h2>
-<p>CREATE2的用法和之前讲的Create类似，同样是new一个合约，并传入新合约构造函数所需的参数，只不过要多传一个salt参数：<br>
-<code>Contract x = new Contract{salt: _salt, value: _value}(params)</code><br>
-其中Contract是要创建的合约名，x是合约对象（地址），_salt是指定的盐；如果构造函数是payable，可以创建时转入_value数量的ETH，params是新合约构造函数的参数。<br>
-<strong>salt 常用的计算方式</strong><br>
-1.使用user_id的哈希<br>
-2.使用部署钱包地址或者调用合约地址的哈希<br>
-3.在uniswapV2中使用交易对的地址哈希</p>
-<h2 id="create2如何计算地址">create2如何计算地址</h2>
-<p>CREATE2的目的是为了让合约地址独立于未来的事件。不管未来区块链上发生了什么，你都可以把合约部署在事先计算好的地址上。用CREATE2创建的合约地址由4个部分决定：<br>
-1.0xFF：一个常数，避免和CREATE冲突<br>
-2.创建者地址<br>
-3.salt（盐）：一个创建者给定的数值<br>
-4.待部署合约的字节码（bytecode）<br>
-<code>newAddress = hash(&quot;0xFF&quot;,创建者地址, salt, bytecode)</code><br>
-CREATE2 确保，如果创建者使用 CREATE2 和提供的 salt 部署给定的合约bytecode，它将存储在 新地址 中。</p>
-<h1 id="在remix上验证create2">在remix上验证create2</h1>
-<p>Pair.sol</p>
-<pre><code class="language-pragma">contract Pair{
-    address public factory; // 工厂合约地址
-    address public token0; // 代币1
-    address public token1; // 代币2
-
-    constructor() payable {
-        factory = msg.sender;
-    }
-
-    // called once by the factory at time of deployment
-    function initialize(address _token0, address _token1) external {
-        require(msg.sender == factory, 'UniswapV2: FORBIDDEN'); // sufficient check
-        token0 = _token0;
-        token1 = _token1;
-    }
-}
-</code></pre>
-<p>PairFactory2.sol</p>
-<pre><code class="language-pragma">import &quot;./Pair.sol&quot;;
-
-contract PairFactory2{
-        mapping(address =&gt; mapping(address =&gt; address)) public getPair; // 通过两个代币地址查Pair地址
-        address[] public allPairs; // 保存所有Pair地址
-
-        function createPair2(address tokenA, address tokenB) external returns (address pairAddr) {
-            // 计算用tokenA和tokenB地址计算salt
-            (address token0, address token1) = tokenA &lt; tokenB ? (tokenA, tokenB) : (tokenB, tokenA); //将tokenA和tokenB按大小排序
-            bytes32 salt = keccak256(abi.encodePacked(token0, token1));
-            // 用create2部署新合约
-            Pair pair = new Pair{salt: salt}(); 
-            // 调用新合约的initialize方法
-            pair.initialize(tokenA, tokenB);
-            // 更新地址map
-            pairAddr = address(pair);
-            allPairs.push(pairAddr);
-            getPair[tokenA][tokenB] = pairAddr;
-            getPair[tokenB][tokenA] = pairAddr;
-        }
-
-// 提前计算pair合约地址
-function calculateAddr(address tokenA, address tokenB) public view returns(address predictedAddress){
-    // 计算用tokenA和tokenB地址计算salt
-    (address token0, address token1) = tokenA &lt; tokenB ? (tokenA, tokenB) : (tokenB, tokenA); //将tokenA和tokenB按大小排序
-    bytes32 salt = keccak256(abi.encodePacked(token0, token1));
-    // 计算合约地址方法 hash()
-    predictedAddress = address(uint160(uint(keccak256(abi.encodePacked(
-        bytes1(0xff),
-        address(this),
-        salt,
-        keccak256(type(Pair).creationCode)
-    )))));
-}
-
-}
-</code></pre>
-<p>对比计算出的合约地址和create2创建出来的合约地址：<br>
-<img src="https://s2.loli.net/2022/05/25/1i9wPnAUfuRE7cX.png" alt="微信图片_20220525010322.png" loading="lazy"></p>
-<h1 id="create2的实际应用场景">create2的实际应用场景</h1>
-<p>1.交易所为新用户预留创建钱包合约地址。<br>
-2.由 CREATE2 驱动的 factory 合约，在uniswapV2中交易对的创建是在 Factory中调用create2完成。这样做的好处是: 它可以得到一个确定的pair地址, 使得 Router中就可以通过 tokenA, tokenB 计算出pair地址, 不再需要执行一次 Factory.getPair(tokenA, tokenB) 的跨合约调用。</p>
 ]]></content>
     </entry>
 </feed>
