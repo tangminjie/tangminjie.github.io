@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://tangminjie.github.io</id>
     <title>Tangminjie&apos;s Blog</title>
-    <updated>2023-02-24T16:53:20.649Z</updated>
+    <updated>2023-03-15T08:05:25.113Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://tangminjie.github.io"/>
     <link rel="self" href="https://tangminjie.github.io/atom.xml"/>
@@ -11,7 +11,7 @@
     <icon>https://tangminjie.github.io/favicon.ico</icon>
     <rights>All rights reserved 2023, Tangminjie&apos;s Blog</rights>
     <entry>
-        <title type="html"><![CDATA[撸空投工具集合]]></title>
+        <title type="html"><![CDATA[空投，量化交易工具集合]]></title>
         <id>https://tangminjie.github.io/post/--WKNkawg/</id>
         <link href="https://tangminjie.github.io/post/--WKNkawg/">
         </link>
@@ -40,6 +40,10 @@ https://www.daylight.xyz/abilities</p>
 测试币和主网币兑换</p>
 <p>** 水龙头 2023更新 **<br>
 https://blockwander.com/ethereum-goerli-faucet/</p>
+<p>** 量化交易工具网站 **</p>
+<ol>
+<li>作者产出很高 https://www.fmz.com/</li>
+</ol>
 ]]></content>
     </entry>
     <entry>
