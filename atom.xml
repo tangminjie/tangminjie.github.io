@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://tangminjie.github.io</id>
     <title>Tangminjie&apos;s Blog</title>
-    <updated>2023-03-28T10:11:27.693Z</updated>
+    <updated>2023-04-05T06:52:12.152Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://tangminjie.github.io"/>
     <link rel="self" href="https://tangminjie.github.io/atom.xml"/>
@@ -43,6 +43,11 @@ https://blockwander.com/ethereum-goerli-faucet/</p>
 <p>** 量化交易工具网站 **</p>
 <ol>
 <li>作者产出很高 https://www.fmz.com/</li>
+</ol>
+<p>** 节点部署国外服务器 **</p>
+<ol>
+<li>https://dedipath.com/</li>
+<li>https://www.vultr.com/ 按小时收费</li>
 </ol>
 ]]></content>
     </entry>
